@@ -157,12 +157,26 @@ local function _ability_cooldown(ability_extension, ability_type)
         return nil, 0
     end
     local progress = ability_extension:get_ability_resource_regen_progress(ability_type) or 1
-    local missing = ability_extension:missing_ability_resource_until_next_charge(ability_type)
+    if progress ~= progress then
+        progress = 1
+    end
+    local missing, missing_percent = ability_extension:missing_ability_resource_until_next_charge(ability_type)
     if not missing or missing <= 0 then
         return 0, progress
     end
     if ability.only_uses_charges then
         return nil, progress
+    end
+    -- Husk extensions (e.g. the spectated teammate while you are dead) have no buff
+    -- extension and error() on get_ability_resource_cost_per_second, so fall back to
+    -- the synced per-charge regen time there.
+    if not ability_extension._buff_extension then
+        local max_regen_time = ability_extension:max_regen_time_for_ability_charge(ability_type) or 0
+        local seconds = (missing_percent or 0) * max_regen_time
+        if seconds <= 0 then
+            return nil, progress
+        end
+        return seconds, progress
     end
     local rate = _ability_resource_regen_per_second(ability_extension, ability_type, ability)
     if rate <= 0 then
