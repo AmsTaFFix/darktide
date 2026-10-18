@@ -1,0 +1,6 @@
+[submodule "3rdparty/Darktide-Source-Code"]
+	path = 3rdparty/Darktide-Source-Code
+	url = https://github.com/Aussiemon/Darktide-Source-Code.git
+[submodule "3rdparty/Darktide-Mod-Framework"]
+	path = 3rdparty/Darktide-Mod-Framework
+	url = https://github.com/Darktide-Mod-Framework/Darktide-Mod-Framework.git
