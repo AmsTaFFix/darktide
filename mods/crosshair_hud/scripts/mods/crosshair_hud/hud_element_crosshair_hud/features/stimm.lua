@@ -175,11 +175,9 @@ function feature.update(parent)
         end
 
         if stimm_countdown == "" then
-            -- A game patch removed remaining_ability_cooldown; derive seconds from
-            -- the resource deficit times the per-charge regen time.
-            local _, missing_resource_percent = ability_ext:missing_ability_resource_until_next_charge("pocketable_ability")
-            local max_regen_time = ability_ext:max_regen_time_for_ability_charge("pocketable_ability")
-            local cooldown = (missing_resource_percent or 0) * (max_regen_time or 0)
+            -- A game patch removed remaining_ability_cooldown; reconstruct real
+            -- seconds from the new resource model (see mod.utils.ability_cooldown).
+            local cooldown = mod_utils.remaining_ability_cooldown(ability_ext, "pocketable_ability")
             if cooldown >= 0.05 then
                 stimm_countdown = string.format("%.0f", math.ceil(cooldown))
                 countdown_color = { 255, 255, 0, 0 }
