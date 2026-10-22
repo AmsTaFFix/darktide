@@ -476,6 +476,24 @@ mod:hook(CLASS.StateMainMenu, "_show_reconnect_popup", function(func, self)
   return func(self)
 end)
 
+-- The player can be sitting in character select while still holding a live
+-- hub session from the previous mission (StateExitToMainMenu never clears
+-- Managers.multiplayer_session). Rejoining with that stale session held
+-- makes vanilla StateMainMenu.update() call poll_available_session(), a
+-- no-op, so it never transitions and the reconnect popup loops forever.
+-- Drop the stale session first; covers both the auto-rejoin above and the
+-- player pressing the vanilla Reconnect button.
+mod:hook(CLASS.StateMainMenu, "_rejoin_game", function(func, self)
+  local multiplayer_session = Managers.multiplayer_session
+
+  if multiplayer_session:has_session() or multiplayer_session:is_booting_session() then
+    mod:warning("StateMainMenu rejoining with a stale multiplayer session held, resetting it first")
+    multiplayer_session:reset("psych_ward: dropping stale hub session before rejoining game session")
+  end
+
+  return func(self)
+end)
+
 mod:hook(CLASS.StateMainMenu, "update", function(func, self, main_dt, main_t)
   if self._continue and not self:waiting_for_profile_synchronization() then
 
