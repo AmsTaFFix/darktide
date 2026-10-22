@@ -440,6 +440,7 @@ mod:hook(CLASS.StateMainMenu, "_show_reconnect_popup", function(func, self)
   _flag_for_return = true
 
   if _is_matchmaking_from_main_menu then
+    _is_matchmaking_from_main_menu = false
     self._reconnect_popup_id = nil
     self._reconnect_pressed = true
     self:_rejoin_game()
@@ -552,7 +553,9 @@ mod:hook(CLASS.MainMenuView, "_handle_input", function(func, self, input_service
   --  mod:hook_enable(CLASS.PartyImmateriumMember, "presence_name")
   --end
 
-  _is_matchmaking_from_main_menu = is_in_matchmaking
+  if is_in_matchmaking then
+    _is_matchmaking_from_main_menu = true
+  end
 end)
 
 mod:hook_safe(CLASS.MainMenuView, "_setup_interactions", function(self)
@@ -585,6 +588,7 @@ mod:hook_safe(CLASS.MainMenuView, "_setup_interactions", function(self)
 
   _return_to_character_select = false
   _is_transitioning = false
+  _is_matchmaking_from_main_menu = false
   _setup_complete = true
 
   Managers.data_service.store:reset()
