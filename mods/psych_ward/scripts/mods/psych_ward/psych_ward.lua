@@ -10,6 +10,7 @@ local Promise = require("scripts/foundation/utilities/promise")
 local UIWidget = require("scripts/managers/ui/ui_widget")
 local ButtonPassTemplates = require("scripts/ui/pass_templates/button_pass_templates")
 local Missions = require("scripts/settings/mission/mission_templates")
+local GameModeSettings = require("scripts/settings/game_mode/game_mode_settings")
 local StepperPassTemplates = require("scripts/ui/pass_templates/stepper_pass_templates")
 
 local _mb_workaround = false
@@ -327,6 +328,30 @@ mod:hook(CLASS.MultiplayerSessionManager, "find_available_session", function(fun
   return func(...)
 end)
 
+-- Guard against a race where the old mechanism's connection teardown (triggered by
+-- Managers.multiplayer_session:reset()/boot_singleplayer_session() above) clears
+-- Managers.mechanism._mechanism after change_mechanism() just installed a new one,
+-- which would otherwise crash StateLoading when it reads mechanism_data().
+mod:hook(CLASS.StateLoading, "_start_loading_mission", function(func, self)
+  if self._needs_load_level and not Managers.mechanism:current_mechanism() then
+    mod:warning("StateLoading tried to load a mission with no mechanism set, deferring")
+    self.psych_ward_pending_mission_load = true
+
+    return
+  end
+
+  self.psych_ward_pending_mission_load = false
+
+  return func(self)
+end)
+
+mod:hook_safe(CLASS.StateLoading, "update", function(self)
+  if self.psych_ward_pending_mission_load and Managers.mechanism:current_mechanism() then
+    self.psych_ward_pending_mission_load = false
+    self:_start_loading_mission()
+  end
+end)
+
 local main_menu_definitions_file = "scripts/ui/views/main_menu_view/main_menu_view_definitions"
 mod:hook_require(main_menu_definitions_file, function(definitions)
 
@@ -472,8 +497,17 @@ mod:hook(CLASS.StateMainMenu, "update", function(func, self, main_dt, main_t)
       local mechanism_manager = Managers.mechanism
       local mission_settings = Missions[mechanism_context.mission_name]
       local mechanism_name = mission_settings.mechanism_name
+      local game_mode_settings = GameModeSettings[mission_settings.game_mode_name]
 
-      Managers.multiplayer_session:boot_singleplayer_session()
+      if game_mode_settings and game_mode_settings.host_singleplay then
+        Managers.multiplayer_session:reset("psych_ward: hosting training grounds singleplayer mission")
+        Managers.multiplayer_session:boot_singleplayer_session()
+      end
+
+      if Managers.connection:is_host() then
+        Managers.connection:reset_seed()
+      end
+
       mechanism_manager:change_mechanism(mechanism_name, mechanism_context)
       local next_state, state_context = mechanism_manager:wanted_transition()
 
