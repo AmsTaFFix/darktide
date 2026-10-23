@@ -1,0 +1,4 @@
+[size=4][b]1.7.3 — 2026-10-23[/b][/size]
+[color=#D4D4D8][list]
+[*]Fixed weapon re-blessing/crafting, inventory equip changes, and talent changes made from the mod's Character Select buttons (Crafting, Inventory, Talents) not taking effect in a mission until the affected gear was toggled off and back on from inside an actual session.
+[/list][/color]
