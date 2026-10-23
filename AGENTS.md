@@ -17,7 +17,7 @@ mods/<name>/nexus_metadata/VERSION                        current Nexus version,
 mods/<name>/nexus_metadata/CHANGELOG.md                   release history, source of truth
 mods/<name>/nexus_metadata/short_description.txt          Nexus mod-page summary blurb, plain text
 mods/<name>/nexus_metadata/full_description.txt           Nexus "Description" tab, BBCode
-mods/<name>/nexus_metadata/changelog/<version>.txt        per-version changelog for that file upload, BBCode
+mods/<name>/nexus_metadata/changelog/<version>.txt        per-version changelog for that file upload, plain text
 3rdparty/Darktide-Source-Code/   submodule, 203 MB decompiled game source — READ ONLY
 3rdparty/Darktide-Mod-Framework/ submodule, DMF — READ ONLY
 nexus/                           untracked Nexus publishing staging (.zip only)
@@ -70,10 +70,12 @@ mods/<name>/nexus_metadata/
   CHANGELOG.md              source of truth, newest version first
   short_description.txt     Nexus mod-page summary blurb, plain text, no BBCode
   full_description.txt      Nexus "Description" tab, BBCode
-  changelog/<version>.txt   per-version changelog for that file upload, BBCode
+  changelog/<version>.txt   per-version changelog for that file upload, plain text
 ```
 
-`full_description.txt` and `changelog/*.txt` are **BBCode**, not Markdown, despite the `.txt` extension — Nexus has no dedicated file format; the extension is deliberate, don't "fix" it to `.md`. Never put `#`, `**`, or `-` lists in them. Tag subset actually used: `[b] [i] [u] [size=N] [color=#hex] [url=...] [list] [*]`. No unclosed tags, no space before a closing tag (`[url=x]name [/url]` is wrong). English only.
+`full_description.txt` is **BBCode**, not Markdown, despite the `.txt` extension — Nexus has no dedicated file format; the extension is deliberate, don't "fix" it to `.md`. Never put `#`, `**`, or `-` lists in it. Tag subset actually used: `[b] [i] [u] [size=N] [color=#hex] [url=...] [list] [*]`. No unclosed tags, no space before a closing tag (`[url=x]name [/url]` is wrong). English only.
+
+`changelog/<version>.txt` (the per-upload changelog Nexus attaches to a file) is **plain text, not BBCode** — no tags, no `[list]`/`[*]`, no `-`/`*` dashes. One fixed/changed/added item per line, nothing else on that line. English only.
 
 `full_description.txt` sections, in this order, each a `[size=4][b]Name[/b][/size]` header followed by a `[color=#D4D4D8]...[/color]` body: Description, Installation instructions, Main features, Requirements, Shout outs. Don't enumerate individual fixed bugs here — that list lives only in `changelog/<version>.txt` (Nexus attaches a changelog to each file upload, there is no single aggregate tab); the description just points there, so a fix is never typed in two places.
 
@@ -81,7 +83,7 @@ mods/<name>/nexus_metadata/
 
 `VERSION` = upstream Fracticality version plus our own bump, e.g. `2.0.6` on top of upstream `2.0.5b`. The user supplies the upstream base and when to bump — never invent or auto-bump a version.
 
-`CHANGELOG.md` is Keep-a-Changelog shaped, newest first: `## <version> — YYYY-MM-DD`, then `### Fixed`/`### Changed`/`### Added` with `-` bullets, one per user-visible effect (crash message or game patch where that's what the user recognizes, not commit hashes or file paths). Every version needs both a `CHANGELOG.md` entry and a matching `changelog/<version>.txt` BBCode slice with the same content; the `.md` wins on conflict.
+`CHANGELOG.md` is Keep-a-Changelog shaped, newest first: `## <version> — YYYY-MM-DD`, then `### Fixed`/`### Changed`/`### Added` with `-` bullets, one per user-visible effect (crash message or game patch where that's what the user recognizes, not commit hashes or file paths). Every version needs both a `CHANGELOG.md` entry and a matching `changelog/<version>.txt` plain-text slice with the same content (one item per line, no `-` dashes, no BBCode); the `.md` wins on conflict.
 
 ## Git
 
