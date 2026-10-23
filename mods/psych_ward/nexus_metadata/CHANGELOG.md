@@ -2,6 +2,12 @@
 
 All notable changes to this bugfix reupload of Psych Ward are documented here. Base: upstream 1.7.1.
 
+## 1.7.3 - 2026-10-23
+
+### Fixed
+
+- Weapon re-blessing/crafting, inventory equip changes, and talent changes made from the mod's Character Select buttons (Crafting, Inventory, Talents) not taking effect in a mission until the affected gear was toggled off and back on from inside an actual session.
+
 ## 1.7.2 - 2026-10-23
 
 ### Fixed

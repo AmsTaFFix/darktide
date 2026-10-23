@@ -4,6 +4,7 @@ mod.context = mod:persistent_table("mod_context", {
 })
 
 mod:io_dofile("psych_ward/scripts/mods/psych_ward/patches/title_view")
+mod:io_dofile("psych_ward/scripts/mods/psych_ward/patches/character_select_profile_resync")
 
 local ProfileUtils = require("scripts/utilities/profile_utils")
 local Promise = require("scripts/foundation/utilities/promise")
