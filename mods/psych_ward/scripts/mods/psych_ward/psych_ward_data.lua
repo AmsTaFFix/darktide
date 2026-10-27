@@ -81,11 +81,29 @@ local _button_registry = {
   meatgrinder = {
     offset = { x = -1000, y = -75 },
   },
+  havoc = {
+    offset = { x = -750, y = -135 },
+    enabled_default = false,
+  },
+}
+local _button_order = {
+  "horde",
+  "mission",
+  "vendor",
+  "contracts",
+  "crafting",
+  "inventory",
+  "cosmetics",
+  "penance",
+  "expedition",
+  "meatgrinder",
+  "havoc",
 }
 local function _create_button_settings()
 
   local button_widgets = {}
-  for button_name, button_defaults in pairs(_button_registry) do
+  for _, button_name in ipairs(_button_order) do
+    local button_defaults = _button_registry[button_name]
     local button_setting_id = string.format("%s_button", button_name)
     local default_offset = button_defaults.offset and table.clone(button_defaults.offset)
     local default_size = button_defaults.size
@@ -97,7 +115,7 @@ local function _create_button_settings()
         {
           setting_id = string.format("%s_enabled", button_setting_id),
           type = "checkbox",
-          default_value = true,
+          default_value = button_defaults.enabled_default ~= false,
         },
         _create_button_offset_setting(button_setting_id, "x", default_offset),
         _create_button_offset_setting(button_setting_id, "y", default_offset),
