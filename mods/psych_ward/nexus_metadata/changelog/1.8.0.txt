@@ -1,0 +1,1 @@
+Added a per-button Enabled toggle in the Button Placement settings, so you can hide individual Character Select buttons you don't use (e.g. Mortis Trials). Takes effect immediately, no mod reload needed.

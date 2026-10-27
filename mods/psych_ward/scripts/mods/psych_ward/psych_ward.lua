@@ -163,6 +163,36 @@ local _button_settings = {
   --},
 }
 
+local _main_menu_view
+
+local function _is_button_enabled(button_name)
+  local enabled = mod:get(string.format("%s_enabled", button_name))
+  return enabled == nil or enabled
+end
+
+-- Force disabled buttons hidden and non-interactive. Only hides; never shows,
+-- so it doesn't fight the Vendors legend toggle or mod.on_setting_changed below.
+local function _apply_disabled_buttons(widgets_by_name)
+  if not widgets_by_name then
+    return
+  end
+
+  for _, button_name in ipairs(_view_button_names) do
+    local widget = widgets_by_name[button_name]
+    if widget and not _is_button_enabled(button_name) then
+      widget.content.visible = false
+      widget.content.hotspot.disabled = true
+    end
+  end
+
+  if not _is_button_enabled(_meatgrinder_button) then
+    local stepper_widget = widgets_by_name[_difficulty_stepper]
+    if stepper_widget then
+      stepper_widget.content.visible = false
+    end
+  end
+end
+
 --[[
   Character Select Psykhanium Button
 ]]--
@@ -208,6 +238,8 @@ function MainMenuView:cb_on_toggle_view_buttons()
 
     widget_content.visible = not widget_content.visible
   end
+
+  _apply_disabled_buttons(widgets_by_name)
 end
 
 local legend_input = {
@@ -576,6 +608,8 @@ mod:hook(CLASS.MainMenuView, "_handle_input", function(func, self, input_service
   expedition_button_content.hotspot.disabled = is_in_matchmaking
   --havoc_button_content.hotspot.disabled = true
 
+  _apply_disabled_buttons(self._widgets_by_name)
+
   for i, character_list_widget in ipairs(self._character_list_widgets) do
     character_list_widget.content.hotspot.disabled = is_in_matchmaking
   end
@@ -632,6 +666,9 @@ mod:hook_safe(CLASS.MainMenuView, "_setup_interactions", function(self)
       end
     end
   end
+
+  _main_menu_view = self
+  _apply_disabled_buttons(widgets_by_name)
 
   local play_button_content = widgets_by_name.play_button.content
   play_button_content.original_text = mod:localize("enter_hub")
@@ -705,3 +742,38 @@ end)
 --    extra_package_id = nil
 --  end
 --end)
+
+mod:hook_safe(CLASS.MainMenuView, "on_exit", function(self)
+  if _main_menu_view == self then
+    _main_menu_view = nil
+  end
+end)
+
+-- Live-apply a button's enabled toggle while the Character Select menu is open,
+-- so the player doesn't have to reload the mod. Enabling restores visibility and
+-- interactivity; disabling is enforced every frame by _apply_disabled_buttons.
+function mod.on_setting_changed(setting_id)
+  if not string.find(setting_id, "_button_enabled", 1, true) then
+    return
+  end
+
+  local view = _main_menu_view
+  if not view or not view._widgets_by_name then
+    return
+  end
+
+  local widgets_by_name = view._widgets_by_name
+  for _, button_name in ipairs(_view_button_names) do
+    local widget = widgets_by_name[button_name]
+    if widget then
+      local enabled = _is_button_enabled(button_name)
+      widget.content.visible = enabled
+      widget.content.hotspot.disabled = not enabled
+    end
+  end
+
+  local stepper_widget = widgets_by_name[_difficulty_stepper]
+  if stepper_widget then
+    stepper_widget.content.visible = _is_button_enabled(_meatgrinder_button)
+  end
+end

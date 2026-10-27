@@ -94,6 +94,11 @@ local function _create_button_settings()
       setting_id = button_setting_id,
       type = "group",
       sub_widgets = {
+        {
+          setting_id = string.format("%s_enabled", button_setting_id),
+          type = "checkbox",
+          default_value = true,
+        },
         _create_button_offset_setting(button_setting_id, "x", default_offset),
         _create_button_offset_setting(button_setting_id, "y", default_offset),
         _create_button_size_setting(button_setting_id, "height", default_size),

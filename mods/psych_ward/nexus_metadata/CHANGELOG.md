@@ -2,6 +2,12 @@
 
 All notable changes to this bugfix reupload of Psych Ward are documented here. Base: upstream 1.7.1.
 
+## 1.8.0 - 2026-10-28
+
+### Added
+
+- Per-button Enabled toggle in the Button Placement settings, so you can hide individual Character Select buttons you don't use (e.g. Mortis Trials). Takes effect immediately, no mod reload needed.
+
 ## 1.7.4 - 2026-10-23
 
 ### Fixed

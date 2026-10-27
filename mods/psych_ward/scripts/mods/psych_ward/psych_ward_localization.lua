@@ -149,6 +149,56 @@ return {
     ko = "버튼 배치",
     ru = "Расположение кнопок",
   },
+  horde_button_enabled = {
+    en = "Enabled",
+    ko = "활성화",
+    ru = "Включено",
+  },
+  mission_button_enabled = {
+    en = "Enabled",
+    ko = "활성화",
+    ru = "Включено",
+  },
+  vendor_button_enabled = {
+    en = "Enabled",
+    ko = "활성화",
+    ru = "Включено",
+  },
+  contracts_button_enabled = {
+    en = "Enabled",
+    ko = "활성화",
+    ru = "Включено",
+  },
+  crafting_button_enabled = {
+    en = "Enabled",
+    ko = "활성화",
+    ru = "Включено",
+  },
+  inventory_button_enabled = {
+    en = "Enabled",
+    ko = "활성화",
+    ru = "Включено",
+  },
+  cosmetics_button_enabled = {
+    en = "Enabled",
+    ko = "활성화",
+    ru = "Включено",
+  },
+  penance_button_enabled = {
+    en = "Enabled",
+    ko = "활성화",
+    ru = "Включено",
+  },
+  expedition_button_enabled = {
+    en = "Enabled",
+    ko = "활성화",
+    ru = "Включено",
+  },
+  meatgrinder_button_enabled = {
+    en = "Enabled",
+    ko = "활성화",
+    ru = "Включено",
+  },
   x_offset = {
     en = "X Offset",
     ko = "X 오프셋",

@@ -1,7 +1,7 @@
 [size=4][b]Description[/b][/size]
 [color=#D4D4D8]Unofficial, temporary bugfix build of [url=https://www.nexusmods.com/warhammer40kdarktide/mods/89]"Psych Ward"[/url] by [url=https://www.nexusmods.com/profile/Fracticality?gameId=4943]Fracticality[/url].
 
-Game updates keep breaking [url=https://www.nexusmods.com/warhammer40kdarktide/mods/89]Psych Ward[/url] in new ways. This page tracks and fixes those bugs as they turn up, changing nothing else - see each version's changelog (Files tab) for exactly what it fixes.
+Game updates keep breaking [url=https://www.nexusmods.com/warhammer40kdarktide/mods/89]Psych Ward[/url] in new ways. This page tracks and fixes those bugs as they turn up, with the occasional small quality-of-life tweak - see each version's changelog (Files tab) for exactly what changed.
 
 [size=4][b]Installation instructions[/b][/size]
 [color=#D4D4D8]1. Install and enable [url=https://www.nexusmods.com/warhammer40kdarktide/mods/8]Darktide Mod Framework[/url].
@@ -13,7 +13,7 @@ If you already use the original [url=https://www.nexusmods.com/warhammer40kdarkt
 [size=4][b]Main features[/b][/size]
 [color=#D4D4D8]Same as the original [url=https://www.nexusmods.com/warhammer40kdarktide/mods/89]Psych Ward[/url]: access vendors, the Mission Board, Mortis Trials and the Psykhanium directly from the character-select screen, without loading into the Mourningstar.
 
-This build adds no features - it only fixes bugs that game updates introduced.[/color]
+This build is almost entirely bug fixes for issues that game updates introduced, plus one small quality-of-life addition: a per-button toggle to hide individual character-select buttons you don't use. See each version's changelog (Files tab) for details.[/color]
 
 [size=4][b]Requirements[/b][/size]
 [color=#D4D4D8]- [url=https://www.nexusmods.com/warhammer40kdarktide/mods/8]Darktide Mod Framework[/url][/color]
