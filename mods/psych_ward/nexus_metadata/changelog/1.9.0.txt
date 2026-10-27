@@ -1,0 +1,2 @@
+Added a new "Havoc Mission" button on the Character Select screen that opens the Havoc board (current assignment rank, weekly reward cache, party finder) without loading into the Mourningstar. Disabled by default; turn it on under Button Placement in the mod settings.
+Fixed a crash when opening the Havoc board from Character Select (havoc_play_view.lua: attempt to index field 'player_unit_spawn' (a nil value)).

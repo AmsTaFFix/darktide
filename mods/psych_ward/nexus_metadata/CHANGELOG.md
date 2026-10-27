@@ -2,6 +2,16 @@
 
 All notable changes to this bugfix reupload of Psych Ward are documented here. Base: upstream 1.7.1.
 
+## 1.9.0 - 2026-10-28
+
+### Added
+
+- New "Havoc Mission" button on the Character Select screen that opens the Havoc board (current assignment rank, weekly reward cache, party finder) without loading into the Mourningstar. Disabled by default; turn it on under Button Placement in the mod settings.
+
+### Fixed
+
+- Opening the Havoc board from Character Select no longer crashes with `havoc_play_view.lua: attempt to index field 'player_unit_spawn' (a nil value)`.
+
 ## 1.8.0 - 2026-10-28
 
 ### Added

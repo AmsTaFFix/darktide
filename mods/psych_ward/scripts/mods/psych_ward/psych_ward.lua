@@ -31,7 +31,7 @@ local _cosmetics_button = "cosmetics_button"
 local _penance_button = "penance_button"
 local _expedition_button = "expedition_button"
 local _meatgrinder_button = "meatgrinder_button"
---local _havoc_button = "havoc_button"
+local _havoc_button = "havoc_button"
 local _difficulty_stepper = "difficulty_stepper"
 local _stepper_content
 
@@ -46,7 +46,7 @@ local _view_button_names = {
   _penance_button,
   _meatgrinder_button,
   _expedition_button,
-  --_havoc_button,
+  _havoc_button,
 }
 
 --local button_size = { 150, ButtonPassTemplates.terminal_button_small.size[2] -12 }
@@ -151,16 +151,16 @@ local _button_settings = {
       position = { mod:get("meatgrinder_button_x_offset"), mod:get("meatgrinder_button_y_offset"), 0 }
     }
   },
-  --[_havoc_button] = {
-  --  view_name = "havoc_background_view",
-  --  scenegraph_definition = {
-  --    parent = "play_button",
-  --    vertical_alignment = "bottom",
-  --    horizontal_alignment = "right",
-  --    size = { 240, 50 },
-  --    position = { 0, 45, 0 }
-  --  }
-  --},
+  [_havoc_button] = {
+    view_name = "havoc_background_view",
+    scenegraph_definition = {
+      parent = "screen",
+      vertical_alignment = "bottom",
+      horizontal_alignment = "right",
+      size = { mod:get("havoc_button_width"), mod:get("havoc_button_height") },
+      position = { mod:get("havoc_button_x_offset"), mod:get("havoc_button_y_offset"), 0 }
+    }
+  },
 }
 
 local _main_menu_view
@@ -699,6 +699,40 @@ mod:hook(CLASS.MissionBoardView, "_set_hologram_outline", function(func, self, v
   end
 
   return func(self, value)
+end)
+
+-- HavocPlayView._setup_current_havoc_mission_data derives a stat_id from
+-- Managers.state.player_unit_spawn, a manager that only exists during gameplay (hub/mission).
+-- Opening the Havoc board from Character Select has no such manager, so the call indexes nil and
+-- crashes. The derived value (self._user_stat_id) is never read anywhere, and all havoc data comes
+-- from the backend, so stub the manager for the duration of the setup call to keep it harmless.
+mod:hook(CLASS.HavocPlayView, "_setup_current_havoc_mission_data", function(func, self, ...)
+  local state = Managers.state
+  if state.player_unit_spawn ~= nil then
+    return func(self, ...)
+  end
+
+  local stub_owner = {
+    remote = false,
+    local_player_id = function()
+      return 1
+    end,
+  }
+  state.player_unit_spawn = {
+    owner = function()
+      return stub_owner
+    end,
+  }
+
+  local success, result = pcall(func, self, ...)
+
+  state.player_unit_spawn = nil
+
+  if not success then
+    error(result)
+  end
+
+  return result
 end)
 
 mod:hook_safe(CLASS.GroupFinderView, "on_enter", function(self)

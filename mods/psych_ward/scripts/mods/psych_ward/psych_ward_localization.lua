@@ -199,6 +199,11 @@ return {
     ko = "활성화",
     ru = "Включено",
   },
+  havoc_button_enabled = {
+    en = "Enabled",
+    ko = "활성화",
+    ru = "Включено",
+  },
   x_offset = {
     en = "X Offset",
     ko = "X 오프셋",
