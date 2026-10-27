@@ -488,7 +488,7 @@ mod:hook(CLASS.StateMainMenu, "_rejoin_game", function(func, self)
   local multiplayer_session = Managers.multiplayer_session
 
   if multiplayer_session:has_session() or multiplayer_session:is_booting_session() then
-    mod:warning("StateMainMenu rejoining with a stale multiplayer session held, resetting it first")
+    mod:info("StateMainMenu rejoining with a stale multiplayer session held, resetting it first")
     multiplayer_session:reset("psych_ward: dropping stale hub session before rejoining game session")
   end
 

@@ -2,6 +2,16 @@
 
 All notable changes to this bugfix reupload of Psych Ward are documented here. Base: upstream 1.7.1.
 
+## 1.7.4 - 2026-10-23
+
+### Fixed
+
+- Crash entering the Meat Grinder (Psykhanium/Mortis Trial) right after changing gear, crafting, or talents from the mod's Character Select buttons (`unit_spawner_manager.lua: Unit not found`).
+
+### Changed
+
+- "rejoining with a stale multiplayer session" message no longer spams chat — log only now.
+
 ## 1.7.3 - 2026-10-23
 
 ### Fixed

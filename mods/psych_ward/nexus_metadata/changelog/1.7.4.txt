@@ -1,0 +1,2 @@
+Fixed crash entering the Meat Grinder (Psykhanium/Mortis Trial) right after changing gear, crafting, or talents from the mod's Character Select buttons.
+Changed "rejoining with a stale multiplayer session" message to log only, no longer spams chat.

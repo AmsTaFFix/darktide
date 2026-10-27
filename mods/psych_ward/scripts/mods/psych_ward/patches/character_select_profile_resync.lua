@@ -22,18 +22,34 @@ local function _has_live_connection()
   return connection ~= nil and (connection:is_host() or connection:is_client())
 end
 
+-- Guard against a race where the player edits gear/talents then immediately starts a
+-- Meat Grinder (Psykhanium/Mortis Trial) run: the backend fetch_profile promise here can
+-- resolve after StateMainMenu has already exited and the mission load has begun, and
+-- calling player:set_profile() mid-transition desyncs the local player's visual loadout
+-- units from what the level just spawned, crashing unit_spawner_manager with
+-- "Unit not found". Only resync while still in Character Select.
+local _in_character_select = true
+
+mod:hook_safe(CLASS.StateMainMenu, "on_enter", function()
+  _in_character_select = true
+end)
+
+mod:hook_safe(CLASS.StateMainMenu, "on_exit", function()
+  _in_character_select = false
+end)
+
 local function _resync_local_player_profile()
   local player = Managers.player:local_player(1)
   local character_id = player and not player.__deleted and player:character_id()
 
-  if not character_id then
+  if not character_id or not _in_character_select then
     return
   end
 
   Managers.data_service.gear:invalidate_gear_cache()
 
   Managers.data_service.profiles:fetch_profile(character_id):next(function(profile)
-    if player and not player.__deleted then
+    if player and not player.__deleted and _in_character_select then
       player:set_profile(profile)
     end
   end):catch(function(error)
