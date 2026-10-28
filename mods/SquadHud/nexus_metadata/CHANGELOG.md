@@ -2,6 +2,12 @@
 
 All notable changes to this unofficial reupload of Squad HUD are documented here. Base: upstream 1.5.0 by rrmllnv, community fix by LucLeto.
 
+## 1.6.0 — 2026-10-29
+
+### Added
+- Compatibility with the True Level mod: when it is installed and enabled, the teammate level in the expanded view is taken from True Level and follows its display style (shown as a compact total so it fits the slot).
+- An Integrations option to turn the True Level level source on or off; when off, Squad HUD uses its own level calculation.
+
 ## 1.5.1 — 2026-10-28
 
 Patch 1.13 fix by LucLeto.
