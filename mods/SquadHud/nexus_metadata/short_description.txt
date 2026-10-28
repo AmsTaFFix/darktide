@@ -1,1 +1,1 @@
-Unofficial build of "Squad HUD" by rrmllnv, kept working while the author is away. Starts by restoring the teammate combat-ability display that game patch 1.13 broke. All credit to rrmllnv & LucLeto.
+Unofficial reupload of "Squad HUD" by rrmllnv - a compact strike-team interface showing every squad member's health, toughness, statuses, distance, resources, and loadout in four clean panels. All credit to rrmllnv.
