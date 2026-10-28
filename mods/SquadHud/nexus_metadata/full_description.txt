@@ -163,6 +163,9 @@ Squad HUD shows coherency information inside the teammate panel. For every teamm
 
 If you already use the original [url=https://www.nexusmods.com/warhammer40kdarktide/mods/844]Squad HUD[/url], remove it first so you don't run two copies. Your mod settings are kept (same mod id).[/color]
 
+[size=4][b]Known issues[/b][/size]
+[color=#D4D4D8]NVIDIA DSR / supersampling above your monitor's native resolution can push the panels off-screen. Fix: set the in-game Resolution to native (use DLSS, not DSR).[/color]
+
 [size=4][b]Shout outs[/b][/size]
 [color=#D4D4D8]This is not my mod. Squad HUD was made by [url=https://www.nexusmods.com/profile/RRMLLNV?gameId=4943]rrmllnv[/url], and all credit for it goes to them.
 
@@ -173,5 +176,3 @@ If you already use the original [url=https://www.nexusmods.com/warhammer40kdarkt
 [/list]
 
 Why this page exists: the original author went inactive and the mod broke after game patch 1.13, so I reuploaded it to keep it working for people who still use it. The current patch 1.13 fix bundled here was made by LucLeto. If rrmllnv returns and updates the original, please switch back to it.[/color]
-
-[center][url=https://www.nexusmods.com/profile/RRMLLNV/mods?gameId=4943][img]https://raw.githubusercontent.com/rrmllnv/darktide-mods/master/_images/all-mods.png[/img][/url][/center]
