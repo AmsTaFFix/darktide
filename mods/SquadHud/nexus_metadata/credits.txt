@@ -1,0 +1,2 @@
+rrmllnv - original author of Squad HUD (https://www.nexusmods.com/warhammer40kdarktide/mods/844). All credit for the mod goes to them; this is an unofficial reupload.
+LucLeto - patch 1.13 fix bundled in this build.

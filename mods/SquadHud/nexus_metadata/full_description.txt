@@ -1,0 +1,178 @@
+[size=4][b]Unofficial version[/b][/size]
+[color=#D4D4D8]This is an unofficial build of [url=https://www.nexusmods.com/warhammer40kdarktide/mods/844]Squad HUD[/url] by [url=https://www.nexusmods.com/profile/RRMLLNV?gameId=4943]rrmllnv[/url], reuploaded to keep it working while the original author is away. All credit for the mod goes to rrmllnv - see the full credits at the bottom of this page. The original description follows.[/color]
+
+
+[center][b][size=4]Expanded View[/size][/b][/center]
+
+[center][img]https://raw.githubusercontent.com/rrmllnv/darktide-mods/master/_images/squadhud1.gif[/img][/center]
+[center][i]Press Ctrl to expand the view.[/i][/center]
+
+[center][b][size=4]Showcase[/size][/b][/center]
+
+[center][img]https://raw.githubusercontent.com/rrmllnv/darktide-mods/master/_images/squadhud2.gif[/img][/center]
+
+[center][img]https://raw.githubusercontent.com/rrmllnv/darktide-mods/master/_images/squadhud3.gif[/img][/center]
+
+
+[b][size=4]What it is and why use it[/size][/b]
+
+Squad HUD replaces the vanilla squad panels with four compact panels for the whole strike team. Each panel can show class/status icon, player name, total character level, teammate distance or status text, combat ability state, inventory icons, grenade/blitz and ammo values, expedition salvage, toughness, health, wounds, and active health/toughness numbers.
+
+It is for players who want the squad state to be easier to read at a glance: who is alive, down, dead, trapped, carrying an objective item, in coherency, low on health, or missing resources.
+
+
+[b][size=3]How to use[/size][/b]
+[list=1]
+[*]Install the mod (Darktide Mod Framework / your mod manager, following the game's usual mod setup).[/*]
+[*]Enable the mod and open its options in the mod menu.[/*]
+[*]Adjust position, opacity, and scale in the Display group.[/*]
+[*]Use Visible panels to show the full squad, only yourself, or only teammates (teammates-only mode keeps the same visual anchor by packing teammate panels into the lower slots).[/*]
+[*]Use Local player order to place your own panel at the top or bottom when your panel is visible.[/*]
+[*]Use the Expanded View group to pick Compact vs Expanded default layout, bind Show expanded view, choose Toggle or Hold for the key, and optionally show the key hint.[/*]
+[*]Use the Squad HUD group to turn individual HUD parts on or off.[/*]
+[*]Use the Vanilla HUD group if you want to hide the original player panels and avoid duplicate UI.[/*]
+[*]Changes are stored in DMF's saved settings; use Reset settings to restore the mod's built-in defaults.[/*]
+[/list]
+[b]Benefits[/b]
+[list]
+[*]One compact four-slot squad panel, with optional top or bottom placement for the local-player panel.[/*]
+[*]Teammate panels include class/status icon, name, distance/status text, health, toughness, and wounds.[/*]
+[*]Long names can animate inside the name area instead of overflowing.[/*]
+[*]Optional player-colored names, with inactive gray styling for bots, dead players, and rescued/hogtied players.[/*]
+[*]Optional total level next to player names, calculated from character progression data exposed by the game backend.[/*]
+[*]Inventory icons show grenade/blitz, ammo state, medical crate, ammo crate, stimms, and expedition salvage when available.[/*]
+[*]Grenade/blitz and ammo values can be hidden, always shown, or shown for 5 seconds after they change.[/*]
+[*]Ammo value can be displayed as a percentage, as ammo count only, or as current / max ammo (default).[/*]
+[*]Stimm icons are recolored by syringe type using the mod's built-in colors.[/*]
+[*]Health/toughness values use an active-bar display with priority for health changes and a timed return to health.[/*]
+[*]Overshield uses a golden toughness color and a short peel-off effect when the overshield ends.[/*]
+[*]Toughness damage adds a compact pulse around the panel, with a stronger armor-break pulse when toughness reaches zero.[/*]
+[*]Expanded View key shows account names, platform icons, and extra squad HUD details; optional hint text under the last panel in missions and the Psykhanium.[/*]
+[*]Optional hiding of vanilla local-player and teammate panels.[/*]
+[/list]
+
+[b][size=4]Coherency[/size][/b]
+
+Squad HUD shows coherency information inside the teammate panel. For every teammate, the mod checks whether that player is in coherency with the local player and can show the distance to that teammate directly in the name block.
+
+[list]
+[*]Distance is shown as meters to the teammate and is capped to a compact value so it fits inside the panel.[/*]
+[*]The distance text is hidden when a higher-priority player status is shown, such as downed, dead, netted, pounced, grabbed, or carrying a rescue status.[/*]
+[*]Coherency color: green border means the teammate is in coherency with you.[/*]
+[*]Coherency color: red border means the teammate is outside coherency.[/*]
+[*]If Meters to teammate is turned off, the nickname takes the freed space and long-name marquee animation recalculates for the wider name area.[/*]
+[/list]
+
+[b][size=4]Settings by group[/size][/b]
+
+[b][size=3]Display[/size][/b]
+[list]
+[*]Enable Squad HUD - on/off. Default on. Shows or hides the custom four-slot squad panel.[/*]
+[*]Visible panels - dropdown. Default Full squad. Controls which Squad HUD panels are shown: Full squad, Only me, or Only teammates. In teammates-only mode, teammate panels are packed into the lower slots so the layout keeps the same anchor.[/*]
+[*]Local player order - dropdown. Default Bottom. Controls whether your own panel is placed at the top or bottom when your panel is visible.[/*]
+[*]Position, opacity & scale
+[list=1]
+[*]Offset X - horizontal offset from the top-left screen area in logical pixels, range 0 to 1920. Default 50.[/*]
+[*]Offset Y - vertical offset from the top-left screen area in logical pixels, range 0 to 1080. Default 780.[/*]
+[*]Opacity - 0.1 to 1.0. Default 1.0.[/*]
+[*]Scale - 0.5 to 2.0. Default 0.8. Scale multiplier for the whole Squad HUD.[/*]
+[*]Panel spacing - vertical spacing between Squad HUD player panels (in pixels), range 0 to 200. Default 20.[/*]
+[/list]
+[/*]
+[*]Mourningstar
+[list=1]
+[*]Show class - on/off. Default on. In the Mourningstar hub, shows the character class in the bar area.[/*]
+[*]Show status - on/off. Default on. In the Mourningstar hub, shows the vanilla activity text (hub/loading/etc.) in the items area.[/*]
+[/list]
+[/*]
+[/list]
+[b][size=3]Expanded View[/size][/b]
+[list]
+[*]Expanded squad view - dropdown. Default Expanded. Options: Compact, Expanded. Controls how much extra squad HUD information is visible by default (before using the key).[/*]
+[*]Show expanded view - keybind. Default Left Ctrl. Shows account names, platform icons, and additional squad HUD details according to the selected key mode. When expanded view is active, distance text is hidden so names can use the full name area.[/*]
+[*]Expanded view key mode - dropdown. Default Hold. Toggle switches expanded view on/off; Hold shows it only while the key is held.[/*]
+[*]Show Expanded View key hint - on/off. Default on. Brief hint under the last Squad HUD panel with your Expanded View key (or a reminder if no key is bound). Only in missions and the Psykhanium, not the Mourningstar hub.[/*]
+[/list]
+[b][size=3]Squad HUD[/size][/b]
+[list]
+[*]Show class icon - on/off. Default on. Shows the player class icon, or a status icon when the player is in a special state.[/*]
+[*]Show ability icon - on/off. Default on. Shows the teammate combat ability state.[/*]
+[*]Show player total level - on/off. Default on. Shows the player's total level next to the nickname. The total level is calculated from character progression data exposed by the game backend.[/*]
+[*]Use player colors for names - on/off. Default on. Uses each player's assigned player color for normal names while keeping warning/status colors for temporary status text.[/*]
+[*]Coherency
+[list=1]
+[*]Show meters to teammate - on/off. Default on. Shows distance in the name block. When off, the name area becomes wider and the name marquee recalculates for the larger area.[/*]
+[/list]
+[/*]
+[*]Items
+[list=1]
+[*]Show grenade/blitz icon - on/off. Default on.[/*]
+[list=1]
+[*]When to show grenade/blitz value - dropdown. Default When changed. Options: Never, Always, When changed.[/*]
+[/list]
+[*]Show ammo icon - on/off. Default on.[/*]
+[list=1]
+[*]When to show ammo value - dropdown. Default When changed. Options: Never, Always, When changed.[/*]
+[*]Ammo value format - dropdown. Default Current / max ammo. Options: Percentage, Ammo count, Current / max ammo.[/*]
+[/list]
+[*]Show stimm icon - on/off. Default on.[/*]
+[*]Show med crate icon - on/off. Default on.[/*]
+[*]Show ammo crate icon - on/off. Default on.[/*]
+[/list]
+[/*]
+[*]Health and toughness
+[list=1]
+[*]Show health numbers - on/off. Default on.[/*]
+[*]Show toughness numbers - on/off. Default on.[/*]
+[/list]
+[/*]
+[/list]
+[b][size=3]Strike team status text[/size][/b]
+[list]
+[*]Teammate status lines appear when the game state matches (for example rescue in progress, reviving, rescue available / countdown, dead, unconscious, disabled, pounced, netted, warp grabbed, vortex grabbed, mutant grab, consumed, generic grabbed, ledge hanging, critical health, carrying a luggable).[/*]
+[/list]
+[b][size=3]Vanilla HUD[/size][/b]
+[list]
+[*]Hide local player panel - on/off. Default on.[/*]
+[*]Hide teammate panels - on/off. Default on.[/*]
+[/list]
+[b][size=3]Integrations[/size][/b]
+[list]
+[*]Custom HUD - on/off. Default off. When enabled and Custom HUD has a saved Squad HUD root node, Custom HUD controls the root position and Squad HUD does not apply its own X/Y sliders to that root.[/*]
+[/list]
+[b][size=3]System[/size][/b]
+[list]
+[*]Debug - on/off. Default off. Enables internal Squad HUD debug hotkeys (for example Numpad 1 toggles a long local player name for text animation tests).[/*]
+[*]Reset settings - dropdown: pick the confirm entry and apply to restore all Squad HUD options to defaults.[/*]
+[/list]
+
+
+[quote]To change the block position via [b]Custom HUD[/b], go to the [b]Integrations[/b] section and set [b]Custom HUD - On[/b].[/quote]
+
+[size=3][b]If you use additional mods, follow this load order (top to bottom):[/b][/size]
+[list=1]
+[*]Custom HUD[/*]
+[*]Squad HUD[/*]
+[/list]
+
+
+[size=4][b]Installation (unofficial build)[/b][/size]
+[color=#D4D4D8]1. Install and enable [url=https://www.nexusmods.com/warhammer40kdarktide/mods/8]Darktide Mod Framework[/url].
+2. Install this archive with Vortex, or extract it into <game>\mods\ so you get <game>\mods\SquadHud\.
+3. Make sure "SquadHud" is listed in <game>\mods\mod_load_order.txt.
+
+If you already use the original [url=https://www.nexusmods.com/warhammer40kdarktide/mods/844]Squad HUD[/url], remove it first so you don't run two copies. Your mod settings are kept (same mod id).[/color]
+
+[size=4][b]Known issues[/b][/size]
+[color=#D4D4D8]NVIDIA DSR / supersampling above your monitor's native resolution can push the panels off-screen. Fix: set the in-game Resolution to native (use DLSS, not DSR).[/color]
+
+[size=4][b]Shout outs[/b][/size]
+[color=#D4D4D8]This is not my mod. Squad HUD was made by [url=https://www.nexusmods.com/profile/RRMLLNV?gameId=4943]rrmllnv[/url], and all credit for it goes to them.
+
+[list]
+[*]Original mod: [url=https://www.nexusmods.com/warhammer40kdarktide/mods/844]Squad HUD on Nexus[/url][/*]
+[*]Original author: [url=https://www.nexusmods.com/profile/RRMLLNV?gameId=4943]rrmllnv[/url][/*]
+[*]Source code: [url=https://github.com/rrmllnv/darktide-mods]github.com/rrmllnv/darktide-mods[/url][/*]
+[/list]
+
+Why this page exists: the original author went inactive and the mod broke after game patch 1.13, so I reuploaded it to keep it working for people who still use it. The current patch 1.13 fix bundled here was made by LucLeto. If rrmllnv returns and updates the original, please switch back to it.[/color]

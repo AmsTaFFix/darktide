@@ -1,0 +1,1 @@
+Unofficial reupload of "Squad HUD" by rrmllnv - a compact strike-team interface showing every squad member's health, toughness, statuses, distance, resources, and loadout in four clean panels. All credit to rrmllnv.
