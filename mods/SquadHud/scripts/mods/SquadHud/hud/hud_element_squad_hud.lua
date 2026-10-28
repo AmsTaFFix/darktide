@@ -1161,13 +1161,7 @@ local function expanded_view_level_text(player, expanded_view)
 		return ""
 	end
 
-	local total_level = PlayerDataRuntime.player_total_level(player)
-
-	if not total_level then
-		return ""
-	end
-
-	return tostring(total_level)
+	return PlayerDataRuntime.player_level_text(player) or ""
 end
 
 local function apply_ability_state(style, ability_state)
