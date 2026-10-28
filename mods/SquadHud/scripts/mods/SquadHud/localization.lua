@@ -91,6 +91,14 @@ return {
 		en = "Allows Custom HUD to control Squad HUD scenegraph nodes. When Custom HUD has saved Squad HUD nodes, the Offset X and Offset Y sliders are not applied.",
 		ru = "Позволяет Custom HUD управлять scenegraph-узлами Squad HUD. Если Custom HUD сохранил узлы Squad HUD, смещения X и Y из настроек не применяются.",
 	},
+	integration_true_level = {
+		en = "True Level",
+		ru = "True Level",
+	},
+	integration_true_level_description = {
+		en = "When the True Level mod is installed and enabled, take the player level from it (following its display style). Turn off to always use Squad HUD's own level calculation.",
+		ru = "Если установлен и включён мод True Level, брать уровень игрока из него (с учётом его display style). Выключите, чтобы всегда использовать собственный расчёт уровня Squad HUD.",
+	},
 	squadhud_placement = {
 		en = string.rep("\194\160", 8) .. "Position, opacity & scale",
 		ru = string.rep("\194\160", 8) .. "Позиция, прозрачность и масштаб",

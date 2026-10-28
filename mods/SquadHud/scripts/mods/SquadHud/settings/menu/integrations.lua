@@ -28,5 +28,12 @@ return {
 			tooltip_text = "integration_custom_hud_description",
 			default_value = d("integration_custom_hud", false),
 		},
+		{
+			setting_id = "integration_true_level",
+			type = "checkbox",
+			title = "integration_true_level",
+			tooltip_text = "integration_true_level_description",
+			default_value = d("integration_true_level", true),
+		},
 	},
 }

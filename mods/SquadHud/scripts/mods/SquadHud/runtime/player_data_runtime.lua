@@ -854,6 +854,10 @@ end
 local _true_level_mod
 
 local function true_level_mod()
+	if mod:get("integration_true_level") == false then
+		return nil
+	end
+
 	local tl = _true_level_mod
 
 	if not tl then
