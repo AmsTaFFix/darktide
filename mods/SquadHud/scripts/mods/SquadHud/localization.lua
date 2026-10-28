@@ -208,8 +208,8 @@ return {
 		ru = "Показать общий уровень игроков",
 	},
 	squadhud_show_teammate_level_description = {
-		en = "Shows the total level next to the nickname. The total level is calculated from the character progression data exposed by the game backend.",
-		ru = "Показывает общий уровень рядом с ником. Общий уровень считается из данных прогресса персонажа, которые отдает игровой backend.",
+		en = "Shows the total level next to the nickname. The total level is calculated from the character progression data exposed by the game backend. When the True Level mod is installed and enabled, the value is taken from True Level instead (shown as a compact total to fit the slot).",
+		ru = "Показывает общий уровень рядом с ником. Общий уровень считается из данных прогресса персонажа, которые отдает игровой backend. Если установлен и включён мод True Level, значение берётся из него (компактным общим числом, чтобы влезть в слот).",
 	},
 	squadhud_use_player_colors_for_names = {
 		en = "Use player colors for names",
