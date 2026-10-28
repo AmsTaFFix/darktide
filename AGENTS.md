@@ -64,6 +64,110 @@ No build, no lint, no CI, no test suite. Don't invent one.
 
 Verification is manual, in-game: copy/symlink `mods/<name>/` into `<Darktide>\mods\`, ensure `<name>` is listed in `<Darktide>\mods\mod_load_order.txt`, Darktide Mod Loader + DMF enabled, launch, exercise the affected screen. If you can't do this, say so instead of claiming the fix works.
 
+`tools/deploy.ps1` + `tools/claude_bridge/` give an agent a verification path that doesn't need the user — see **Claude Bridge** below.
+
+## Claude Bridge — in-game verification without the user
+
+`tools/claude_bridge/` is a dev-only DMF mod (not one of the vendored forks — never put it in
+`mods/`, a `nexus/*.zip`, or an upstream PR, and don't enable it in a normal play session). It
+polls a request file on disk and runs it inside the running game, so an agent can execute Lua,
+read live game state, or trigger a mod reload, and read the result back from a file — no
+screenshots, no input synthesis, no asking the user to click anything.
+
+### Deploy
+
+```powershell
+tools/deploy.ps1
+```
+
+Copies `mods/psych_ward`, `mods/crosshair_hud`, `mods/SquadHud`, and `tools/claude_bridge` into
+`<Darktide>\mods\` (excluding `nexus_metadata/`), adds any missing name to
+`<Darktide>\mods\mod_load_order.txt`, and drops a `reload` request so a running game picks up
+the change. Defaults assume the game is installed at
+`C:\Program Files (x86)\Steam\steamapps\common\Warhammer 40,000 DARKTIDE`; pass `-GameDir` if
+not. Pass `-Mods <name>` to deploy a subset, `-SkipReload` to skip the reload nudge.
+
+**First-ever deploy on a machine, or any time `claude_bridge` was just added to
+`mod_load_order.txt`, needs one game restart** — mods only load at launch, so a reload request
+sent before that restart has nothing to receive it. Check
+`%APPDATA%\Fatshark\Darktide\console_logs\console-*.log` (newest file) for
+`Loading mod claude_bridge` to confirm it's loaded; after that, `reload` works without
+restarting.
+
+### Talking to it
+
+Working directory: `%APPDATA%\Fatshark\Darktide\claude_bridge\`.
+
+Write `request.lua` (write to `request.tmp` then rename over it, so the mod never reads a
+half-written file — the mod polls every `poll_interval` seconds, default 0.25):
+
+```lua
+return { id = 1, cmd = "eval", code = "return 1 + 1" }
+```
+
+`id` must be a plain increasing number — the mod only acts on `id` greater than the last one it
+handled (tracked in a `persistent_table`, so it survives a mod reload too) — so bump it on every
+request, don't reuse or reset it. Then poll-read `response.txt` (plain text, not JSON):
+
+```
+id: 1
+ok: true
+value: 2
+```
+
+On failure: `ok: false` plus an `error:` line with the compile or runtime message. A table
+result is written via DMF's own `mod:dtf` to `<Darktide>\binaries\dump\claude_<id>.json`, and
+the response carries `dump: dump/claude_<id>.json` (relative to `binaries/`) instead of a
+`value:` line.
+
+### Commands (`cmd` field)
+
+| `cmd` | Fields | Does |
+| --- | --- | --- |
+| `eval` | `code` (Lua, must `return` something) | Runs it, `value:` for a scalar result, `dump:` for a table. |
+| `dump` | `code`, optional `depth` | Like `eval` but always writes a dump file, even for a scalar. |
+| `state` | — | Dumps game mode, mechanism, UI state name, and (if a player exists) health/toughness percent and alive flag. See `tools/claude_bridge/scripts/mods/claude_bridge/bridge/state_probe.lua` for exact fields. |
+| `notify` | `text` | Puts an on-screen toast — useful to ask the user "is this what you expected" without them typing anything. |
+| `reload` | — | Schedules a DMF mod reload (so edits to any mod's `.lua` take effect without restarting). Requires DMF's `developer_mode` setting to be on; responds `ok: false` with that reason if it isn't. The response is written *before* the reload tears mods down, so it always arrives. |
+| `screenshot` | optional `output_dir`, `filename` | Best-effort only — wraps the one in-engine capture call found in the decompiled source (`FrameCapture.screen_shot`), unverified in a retail build. `ok: false` if unavailable. |
+
+Same registry is reachable by hand in-game as a chat command: `/claude eval return 1+1`.
+
+### Screenshots
+
+The bridge `screenshot` command does **not** work in retail (`FrameCapture.screen_shot`
+is unavailable), and a plain desktop grab misses the game when it is alt-tabbed or on another
+monitor. Use `tools/screenshot.ps1` instead — it captures the Darktide window itself:
+
+```
+pwsh -NoProfile -File tools/screenshot.ps1            # -> tools/.cache/darktide-shot.png
+pwsh -NoProfile -File tools/screenshot.ps1 -OutFile C:\tmp\shot.png
+make shot                                             # same, via the Makefile
+```
+
+It is per-monitor DPI-aware, finds the window by process name (`Darktide`), tries
+`PrintWindow` with `PW_RENDERFULLCONTENT` first (grabs a background window without stealing
+focus), and falls back to foreground + GDI copy only if that frame is blank. `tools/.cache/`
+is a scratch dir — keep it untracked, never commit shots.
+
+Exclusive-fullscreen caveat: if captures come back black, set Darktide to Borderless/Windowed.
+DSR caveat: the capture shows the actual output surface, so if the game renders above the
+monitor's native resolution (NVIDIA DSR / a supersampled resolution), the frame is downsampled
+and HUD placed in the lower/right design area can sit off the visible surface — that is a video
+config, not a mod bug. Verify HUD mods at the monitor's native resolution (use DLSS, not DSR,
+for extra sharpness).
+
+### Troubleshooting
+
+- No `response.txt` appears: confirm `Darktide.exe` is running and the newest console log shows
+  `claude_bridge` loaded (see above); the mod can only poll while the game is up.
+- `reload` returns `ok: false`: enable DMF's `developer_mode` option in the in-game DMF options
+  menu (character select → Darktide Mod Framework) once; it's a per-install setting that
+  persists after that.
+- Editing `tools/claude_bridge/*.lua` itself requires `tools/deploy.ps1` + `reload` (or a
+  restart) same as any other mod — it does not hot-reload itself just because its source changed
+  on disk.
+
 ## Nexus metadata
 
 Each mod's `nexus_metadata/` holds everything that gets pasted into its Nexus page. Nothing Nexus-facing lives anywhere else; these paths are never shipped in `nexus/<mod>_bugfix.zip` and never included in an upstream PR.
