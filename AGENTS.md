@@ -33,10 +33,11 @@ Mods:
 
 ## Reference submodules
 
-Both submodules are reference material, `shallow = true`, never edited or committed into.
+All submodules are reference material, `shallow = true`, never edited or committed into.
 
 - Grep `3rdparty/Darktide-Source-Code/scripts/` to verify a game class/method/field actually exists before hooking it.
 - Grep `3rdparty/Darktide-Mod-Framework/dmf/` for the DMF API (`mod:hook`, `mod:persistent_table`, etc).
+- `3rdparty/Zombine-Darktide-Mods/true_level/` — Zombine's True Level mod, the source for SquadHud's optional True Level integration (`get_mod("true_level")`: `get_true_levels(character_id)`, `is_enabled()`, `get("display_style")`).
 - `3rdparty/` is 200+ MB and will dominate a repo-wide grep — scope searches to `mods/` by default.
 
 ## Lua conventions
