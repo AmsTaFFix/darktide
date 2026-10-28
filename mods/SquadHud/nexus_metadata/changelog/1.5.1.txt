@@ -1,0 +1,3 @@
+Fixed teammate combat-ability state after game patch 1.13: the game removed the old ability-cooldown methods and moved abilities to a regenerating resource, so cooldown and charge progress are now read from the new system and teammate panels show ability state again.
+Fixed an error when reading ability tracking buffs on teammates: a teammate's husk buff extension holds no buffs, so those buffs are now read only where they exist (the local player and solo-play bots), matching vanilla.
+Reduced per-frame work: mod settings, inventory icons, and ammo values are cached instead of being looked up every frame, so the HUD costs less while the squad panels are on screen.
