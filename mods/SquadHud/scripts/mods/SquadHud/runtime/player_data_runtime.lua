@@ -847,6 +847,78 @@ function M.player_total_level(player)
 	return nil
 end
 
+-- Optional integration with the True Level mod (get_mod("true_level"), by Zombine). When present
+-- and enabled, its cache is the source of truth for the level number and its display_style setting
+-- decides the format, so SquadHud agrees with what True Level shows elsewhere. Resolved lazily and
+-- guarded like the ModderTools helpers above, so SquadHud works unchanged when True Level is absent.
+local _true_level_mod
+
+local function true_level_mod()
+	local tl = _true_level_mod
+
+	if not tl then
+		local get_mod_fn = rawget(_G, "get_mod")
+
+		if type(get_mod_fn) ~= "function" then
+			return nil
+		end
+
+		local ok, found = pcall(get_mod_fn, "true_level")
+
+		if not ok or not found then
+			return nil
+		end
+
+		_true_level_mod = found
+		tl = found
+	end
+
+	if type(tl.get_true_levels) ~= "function" or type(tl.is_enabled) ~= "function" or type(tl.get) ~= "function" then
+		return nil
+	end
+
+	local ok_enabled, enabled = pcall(tl.is_enabled, tl)
+
+	if not ok_enabled or not enabled then
+		return nil
+	end
+
+	return tl
+end
+
+function M.player_level_text(player)
+	local tl = true_level_mod()
+
+	if tl then
+		local profile = player_profile(player)
+		local character_id = profile and player_character_id(player, profile)
+
+		if character_id then
+			local ok, true_levels = pcall(tl.get_true_levels, character_id)
+			local current_level = ok and type(true_levels) == "table" and true_levels.current_level
+
+			if type(current_level) == "number" then
+				local ok_style, display_style = pcall(tl.get, tl, "display_style")
+
+				display_style = ok_style and display_style or "default"
+
+				-- SquadHud's relation_status slot is narrow (~42px), so True Level's "separate"
+				-- form ("30 (+183)") is shown as the compact single true_level number here, same
+				-- as "total". "default"/"none" keep the plain current level.
+				if display_style == "total" or display_style == "separate" then
+					return tostring(true_levels.true_level or current_level)
+				end
+
+				return tostring(current_level)
+			end
+		end
+	end
+
+	local total = M.player_total_level(player)
+
+	return total and tostring(total) or nil
+end
+
 function M.player_unit(player)
 	return type(player) == "table" and player.player_unit or nil
 end
