@@ -1,0 +1,1 @@
+Unofficial, temporary bugfix build of "Crosshair HUD" by Fracticality. Fixes crashes game patch 1.13 introduced - nothing else. All credit to Fracticality.

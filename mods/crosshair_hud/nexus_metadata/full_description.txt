@@ -1,0 +1,39 @@
+[size=4][b]Description[/b][/size]
+[color=#D4D4D8]Unofficial, temporary bugfix of [url=https://www.nexusmods.com/warhammer40kdarktide/mods/9]"Crosshair HUD"[/url] by [url=https://www.nexusmods.com/profile/Fracticality?gameId=4943]Fracticality[/url].
+
+Game patch 1.13 broke [url=https://www.nexusmods.com/warhammer40kdarktide/mods/9]Crosshair HUD[/url] in two ways. This reupload fixes both and changes nothing else:
+
+1. Ability / stimm cooldown crash
+"attempt to call method 'remaining_ability_cooldown' (a nil value)"
+The game removed the old cooldown methods; abilities now use a regenerating resource. The ability and stimm timers are now calculated from the new system using the same math as the game itself, so they show exact seconds again for every ability. They also work while you spectate a teammate after going down.
+
+2. Archetype icon crash in missions
+"attempt to index field 'archetype_font_icon_simple' (a nil value)"
+The game removed this icon table. The ally panel and coherency indicators now use the new one.
+
+The fix has been submitted to the original author. Once [url=https://www.nexusmods.com/profile/Fracticality?gameId=4943]Fracticality[/url] merges and releases it, this page is obsolete - please switch back to the original mod.
+
+- [url=https://www.nexusmods.com/warhammer40kdarktide/mods/9]Original mod[/url]
+- [url=https://github.com/fracticality/darktide-mods]Source code[/url]
+- [url=https://github.com/fracticality/darktide-mods/pull/53]Pull request[/url]
+- [url=https://github.com/fracticality/darktide-mods/issues/52]Issue[/url][/color]
+
+[size=4][b]Installation instructions[/b][/size]
+[color=#D4D4D8]1. Install and enable [url=https://www.nexusmods.com/warhammer40kdarktide/mods/8]Darktide Mod Framework[/url].
+2. Install this archive with Vortex, or extract it into <game>\mods\ so you get <game>\mods\crosshair_hud\.
+3. Make sure "crosshair_hud" is listed in <game>\mods\mod_load_order.txt.
+
+If you already use the original [url=https://www.nexusmods.com/warhammer40kdarktide/mods/9]Crosshair HUD[/url], remove it first so you don't run two copies. Your mod settings are kept (same mod id).[/color]
+
+[size=4][b]Main features[/b][/size]
+[color=#D4D4D8]Same as the original [url=https://www.nexusmods.com/warhammer40kdarktide/mods/9]Crosshair HUD[/url]: health, toughness, ammo, reload, grenades, peril/warp charge, ability cooldown, stimm and pocketables, ally and coherency indicators around your crosshair, all configurable in the mod options.
+
+This build adds no features - it only restores the mod after patch 1.13.[/color]
+
+[size=4][b]Requirements[/b][/size]
+[color=#D4D4D8]- [url=https://www.nexusmods.com/warhammer40kdarktide/mods/8]Darktide Mod Framework[/url][/color]
+
+[size=4][b]Shout outs[/b][/size]
+[color=#D4D4D8]All credit for the mod goes to [url=https://www.nexusmods.com/profile/Fracticality?gameId=4943]Fracticality[/url], the original author.
+Thanks to [url=https://www.nexusmods.com/profile/steakwhistle]steakwhistle[/url] and [url=https://www.nexusmods.com/profile/nickman17]nickman17[/url] on the original mod's posts tab for reporting these crashes and posting workarounds.
+This page only exists to keep the mod usable until the official fix ships.[/color]
