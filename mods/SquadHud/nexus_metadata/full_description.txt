@@ -1,7 +1,7 @@
 [size=4][b]Description[/b][/size]
-[color=#D4D4D8]Unofficial, temporary bugfix of [url=https://www.nexusmods.com/warhammer40kdarktide/mods/844]"Squad HUD"[/url] by [url=https://www.nexusmods.com/profile/RRMLLNV?gameId=4943]rrmllnv[/url].
+[color=#D4D4D8]Unofficial build of [url=https://www.nexusmods.com/warhammer40kdarktide/mods/844]"Squad HUD"[/url] by [url=https://www.nexusmods.com/profile/RRMLLNV?gameId=4943]rrmllnv[/url], kept working while the author is away.
 
-Game patch 1.13 broke the teammate combat-ability display in [url=https://www.nexusmods.com/warhammer40kdarktide/mods/844]Squad HUD[/url]: the game removed the old ability-cooldown methods and moved combat abilities to a regenerating resource, so teammate panels stopped showing ability state. This reupload restores it, reads ability buffs safely on teammates, and trims per-frame cost. It changes nothing else. The full list of changes is in the changelog attached to the file.
+Game patch 1.13 broke the teammate combat-ability display in [url=https://www.nexusmods.com/warhammer40kdarktide/mods/844]Squad HUD[/url]: the game removed the old ability-cooldown methods and moved combat abilities to a regenerating resource, so teammate panels stopped showing ability state. This reupload restores it, reads ability buffs safely on teammates, and trims per-frame cost. For now it focuses on that fix; the full list of changes is in the changelog attached to the file.
 
 This build bundles the community fix by LucLeto. Once [url=https://www.nexusmods.com/profile/RRMLLNV?gameId=4943]rrmllnv[/url] updates the original mod, this page is obsolete - please switch back to the original.
 
@@ -20,7 +20,7 @@ If you already use the original [url=https://www.nexusmods.com/warhammer40kdarkt
 [size=4][b]Main features[/b][/size]
 [color=#D4D4D8]Same as the original [url=https://www.nexusmods.com/warhammer40kdarktide/mods/844]Squad HUD[/url]: four compact strike-team panels showing class/status icon, name, total level, teammate distance and coherency, combat ability state, inventory icons (grenade/blitz, ammo, med crate, ammo crate, stimms, expedition salvage), grenade and ammo values, toughness, health, and wounds. An Expanded View key reveals account names, platform icons, and extra details. Everything is configurable in the mod options, and the vanilla squad panels can be hidden to avoid duplicate UI.
 
-This build adds no features - it only restores the mod after patch 1.13.[/color]
+This release focuses on restoring the mod after patch 1.13; later updates may add fixes and quality-of-life improvements.[/color]
 
 [size=4][b]Requirements[/b][/size]
 [color=#D4D4D8][list]

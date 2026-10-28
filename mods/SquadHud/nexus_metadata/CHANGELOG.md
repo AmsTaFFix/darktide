@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this bugfix reupload of Squad HUD are documented here. Base: upstream 1.5.0 by rrmllnv, community fix by LucLeto.
+All notable changes to this unofficial reupload of Squad HUD are documented here. Base: upstream 1.5.0 by rrmllnv, community fix by LucLeto.
 
 ## 1.5.1 — 2026-10-28
 

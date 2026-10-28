@@ -1,1 +1,1 @@
-Unofficial, temporary bugfix build of "Squad HUD" by rrmllnv. Restores the teammate combat-ability display that game patch 1.13 broke - nothing else. All credit to rrmllnv & LucLeto.
+Unofficial build of "Squad HUD" by rrmllnv, kept working while the author is away. Starts by restoring the teammate combat-ability display that game patch 1.13 broke. All credit to rrmllnv & LucLeto.
