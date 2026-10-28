@@ -64,7 +64,7 @@ No build, no lint, no CI, no test suite. Don't invent one.
 
 Verification is manual, in-game: copy/symlink `mods/<name>/` into `<Darktide>\mods\`, ensure `<name>` is listed in `<Darktide>\mods\mod_load_order.txt`, Darktide Mod Loader + DMF enabled, launch, exercise the affected screen. If you can't do this, say so instead of claiming the fix works.
 
-`tools/deploy.ps1` + `tools/claude_bridge/` give an agent a verification path that doesn't need the user — see **Claude Bridge** below.
+`tools/deploy.ps1` + `tools/claude_bridge/` give an agent a verification path that doesn't need the user — see **Claude Bridge** below. This verification is the gate that decides whether a PR self-merges — see **Development workflow**.
 
 ## Claude Bridge — in-game verification without the user
 
@@ -193,6 +193,57 @@ mods/<name>/nexus_metadata/
 
 `CHANGELOG.md` is Keep-a-Changelog shaped, newest first: `## <version> — YYYY-MM-DD`, then `### Fixed`/`### Changed`/`### Added` with `-` bullets, one per user-visible effect (crash message or game patch where that's what the user recognizes, not commit hashes or file paths). Every version needs both a `CHANGELOG.md` entry and a matching `changelog/<version>.txt` plain-text slice with the same content (one item per line, no `-` dashes, no BBCode); the `.md` wins on conflict.
 
+## Development workflow
+
+How a non-trivial tracked change gets made here: **issue → worktree branch → PR → gated merge.**
+Applies to new features and standalone fixes alike. This governs *process*; the upstream-diff
+hygiene from "What this repo is" still governs *mod code content* (keep the diff minimal and
+upstream-mergeable). Trivial repo chores — a docs typo, a metadata tweak — may skip the ceremony
+at the user's discretion.
+
+Turnkey helpers wrap steps 1–2 and 4–5: `tools/new-task.ps1` (`make task`) and
+`tools/finish-task.ps1` (`make finish`). Steps below show both the helper and the raw commands.
+
+1. **Issue first.** Every piece of work opens with a GitHub issue — title = the user-visible
+   outcome, body = problem + acceptance. `gh issue create` (templates under `.github/ISSUE_TEMPLATE/`),
+   or `tools/new-task.ps1` does it for you. Note the issue number `N`.
+
+2. **Worktree + branch.** Branch `<type>/<kebab-topic>`, `<type>` ∈ `feat` / `fix` / `chore`.
+   Work in a dedicated **external sibling worktree**, never on `main` directly:
+
+   ```powershell
+   git worktree add -b feat/<topic> ../darktide-wt/feat-<topic> main
+   ```
+
+   (The submodules under `3rdparty/` are `shallow=true` reference-only and shared across
+   worktrees — no re-init needed.) `tools/new-task.ps1 -Type feat -Topic <topic> -Title "..."`
+   creates the issue, branch, and worktree in one shot and prints the `cd` target.
+
+3. **Implement + verify.** Make the change inside the worktree. Verify on a live client wherever
+   possible — `tools/deploy.ps1` → `reload` via **Claude Bridge** → exercise the affected screen →
+   `tools/screenshot.ps1` or Bridge `state`/`eval` (see **Build & test** and **Claude Bridge**).
+
+4. **Commit + PR.** Commit per the **Git** convention (Conventional Commits, `snake_case` scope,
+   `Co-Authored-By:` attribution line). Push, then `gh pr create`. PR body ends with `Closes #N`
+   and the `🤖 Generated with [Claude Code]` attribution line; fill the
+   `.github/pull_request_template.md` checklist. `tools/finish-task.ps1` pushes and opens the PR.
+
+5. **Gated merge — the decision rule.**
+   - **Verified on a live Darktide client** → merge the PR yourself with a non-ff merge commit to
+     match repo style, then clean up the worktree:
+
+     ```powershell
+     gh pr merge --merge --delete-branch
+     git worktree remove ../darktide-wt/feat-<topic>
+     ```
+
+     `tools/finish-task.ps1 -Verified` does the merge + cleanup.
+   - **Could not verify on a live client** (game not running, screen unreachable, headless) →
+     **do not self-merge.** Report what you did and could not verify, and ask the user whether to
+     merge anyway or hold. (Same spirit as "If you can't do this, say so instead of claiming the
+     fix works" in **Build & test**.) `tools/finish-task.ps1` without `-Verified` stops at the
+     open PR and says so.
+
 ## Git
 
 Conventional Commits, lowercase imperative subject, no trailing period, scope = mod dir in `snake_case`:
@@ -201,7 +252,7 @@ Conventional Commits, lowercase imperative subject, no trailing period, scope = 
 fix(psych_ward): drop stale hub session before rejoining a mission
 ```
 
-Also `chore:` (unscoped) and the repo-custom `vendor: <mod> (upstream, pre-fix)` for importing pristine upstream code before fixes land on top. Branch `fix/<kebab-case-topic>`, merged with a non-fast-forward merge commit.
+Also `chore:` (unscoped) and the repo-custom `vendor: <mod> (upstream, pre-fix)` for importing pristine upstream code before fixes land on top. Branch `<type>/<kebab-case-topic>` (`feat`/`fix`/`chore`), worked in its own worktree and merged with a non-fast-forward merge commit — see **Development workflow** for the full issue→PR→merge loop.
 
 Commit only when asked. Never `git add -A`/`git add .` — `nexus/`, `.idea/`, `.serena/` must stay untracked, and there is no root `.gitignore` to protect you.
 
