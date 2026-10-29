@@ -43,6 +43,35 @@
 -- when it sees one. That is accepted, not fought: a parry interrupting the speed-tech cycle is the
 -- right priority (defending beats speed-running), and SprintRapierHeavy doesn't itself drive
 -- weapon_extra_pressed, so there's nothing to race -- only auto_parry writes it.
+--
+-- We hold weapon_extra_pressed = true for the whole scheduled window, not just one frame, and
+-- don't pre-check action_input_is_currently_valid before doing so. special_action already buffers
+-- for buffer_time = 0.2s and is re-evaluated against the real chain/validity rules every fixed
+-- frame until it validates or the buffer expires (default_melee_action_input_setup.lua:139-147;
+-- action_input_parser.lua:228-236, :696-707; action_handler.lua:673-695) -- re-supplying the press
+-- each tick refreshes that buffer, which is exactly how a real player's mashed key gets picked up
+-- the instant a chain_time boundary opens (e.g. 0.24s into a heavy, 0.4s into a windup/light on
+-- this weapon). The first version of this mod checked validity once and dropped the attempt
+-- outright if the player's own weapon was mid-action -- that one-shot check was the actual
+-- bottleneck, not the engine; letting the engine's own buffer do the retry fixed it with no new
+-- risk, confirmed live (see issue tracker for the session that found this).
+--
+-- "Animation cancel" (force-interrupting the player's own running action so a parry can start
+-- immediately, researched and rejected): there is no priority-based preemption in this engine --
+-- action_priority only ranks fresh-start candidates, never running ones
+-- (action_handler.lua:910-934, :625-671) -- and no interruptible/cancellable flag is grantable to
+-- special_action. The only designed mid-swing cancel is chain_until, and on this weapon it's
+-- granted only to the block input on specific heavy sweeps (combatsword_p3_m1.lua:334-338,
+-- :578-581), never to special_action. The sole bypass,
+-- PlayerUnitWeaponExtension:start_action(name, t) / TRANSITION_TYPES.forced
+-- (player_unit_weapon_extension.lua:858-866), does hard-cut the running action with clean on_exit
+-- cleanup, but skips action_condition_func (bypassing the Psyker-vs-not guard), desyncs the input
+-- queue hierarchy, and is NOT server-authoritative: ActionHandler.server_correction_occurred
+-- (action_handler.lua:514-545) can snap the client back into the interrupted swing, and since
+-- blocking is adjudicated server-side off the replicated weapon_action/block components
+-- (block.lua:32-48, :75-77), a forced client-local parry can visually appear to block while the
+-- server still lets the real hit through -- a worse outcome than not reacting at all. Not
+-- implemented for that reason.
 local mod = get_mod("auto_parry")
 
 local Breed = require("scripts/utilities/breed")
@@ -65,21 +94,27 @@ local RAPIER_WEAPONS = {
 	combatsword_p3_m3 = true,
 }
 
-local SPECIAL_ACTION_INPUT = "special_action"
 local SPECIAL_RAW_INPUT = "weapon_extra_pressed"
 
 local controller = {
-	-- Gameplay-time timestamp of the next scheduled press, or nil if none is pending. Set by
-	-- evaluate_threat (one at a time -- a second detection while one is already pending is
-	-- dropped, see skip_already_scheduled), consumed and cleared by try_fire_scheduled_press.
+	-- Gameplay-time timestamp of the next scheduled window start, or nil if none is pending. Set
+	-- by evaluate_threat (one at a time -- a second detection while one is already pending is
+	-- dropped, see skip_already_scheduled); consumed by try_fire_scheduled_press once t reaches
+	-- it, which then opens the forcing window (see force_active/force_deadline_t below) instead
+	-- of firing a single frame.
 	pending_press_t = nil,
-	-- Diagnostic only, travels alongside pending_press_t so the eventual "pressed" sample can be
-	-- tagged with which attacker it was scheduled for.
+	-- Gameplay-time timestamp of the real hit (plus margin) that the window must not be held past.
+	-- Set alongside pending_press_t.
+	force_deadline_t = nil,
+	-- Diagnostic only, travels alongside pending_press_t/force_deadline_t so the eventual "pressed"
+	-- sample can be tagged with which attacker it was scheduled for.
 	pending_attacker_id = nil,
 	cooldown_until_t = 0,
-	-- One-shot: the InputService hook reads this, returns true for weapon_extra_pressed exactly
-	-- once, and clears it. No queue, nothing to overflow.
-	force_special_press = false,
+	-- True for the whole scheduled window [pending_press_t, force_deadline_t], not just one frame:
+	-- the InputService hook returns true for weapon_extra_pressed on every read while this is set,
+	-- letting the engine's own special_action buffer (see the file header) retry the chain
+	-- validation each fixed frame instead of us deciding pass/fail ourselves in one shot.
+	force_active = false,
 }
 
 local player_weapon_extension = nil
@@ -200,25 +235,30 @@ local function record_sample(t, event, extra)
 	end
 end
 
-local function queue_parry_press(t)
-	controller.force_special_press = true
-	controller.cooldown_until_t = t + (settings.cooldown or 0.5)
-
-	if settings.debug_notify then
-		record_sample(t, "pressed", { unit_id = controller.pending_attacker_id })
-	end
-end
-
--- Runs the checks that only matter right before actually pressing (our own press cooldown,
--- stamina, weapon still out, whether special_action would even be accepted right now) --
--- deliberately NOT done at detection/scheduling time, since a host-feed detection can be
--- scheduled up to ~1s in the future and the player's state (and whether an earlier press's
--- cooldown has cleared yet) is far more likely to have changed by then than to still match what
--- it was at detection. Rejecting a scheduled press here does NOT un-schedule the threat it came
--- from -- a real attack that got this far already won the "which threat gets the one pending
--- slot" contest in evaluate_threat, so if it still can't be pressed (e.g. cooldown hasn't
--- cleared), that's a genuine miss, not something to retry.
+-- Runs the checks that only matter right before actually opening a press window (our own press
+-- cooldown, stamina, weapon still out) -- deliberately NOT done at detection/scheduling time,
+-- since a host-feed detection can be scheduled up to ~1s in the future and the player's state is
+-- far more likely to have changed by then than to still match what it was at detection. Rejecting
+-- a scheduled window here does NOT un-schedule the threat it came from -- a real attack that got
+-- this far already won the "which threat gets the one pending slot" contest in evaluate_threat, so
+-- if it still can't be pressed (e.g. cooldown hasn't cleared), that's a genuine miss, not
+-- something to retry.
+--
+-- Deliberately does NOT check action_input_is_currently_valid here anymore -- see the file header
+-- for why: holding weapon_extra_pressed true for the window lets the engine's own special_action
+-- buffer retry that exact check every fixed frame on its own, which is strictly more capable than
+-- a single check made here ever could be.
 local function try_fire_scheduled_press(t)
+	if controller.force_active then
+		-- Already holding the window open -- just watch for it closing.
+		if t > controller.force_deadline_t then
+			controller.force_active = false
+			controller.force_deadline_t = nil
+		end
+
+		return
+	end
+
 	local press_t = controller.pending_press_t
 	if not press_t or t < press_t then
 		return
@@ -233,10 +273,14 @@ local function try_fire_scheduled_press(t)
 			record_sample(t, "skip_cooldown_at_press", { unit_id = pending_id })
 		end
 
+		controller.force_deadline_t = nil
+
 		return
 	end
 
 	if not is_rapier() then
+		controller.force_deadline_t = nil
+
 		return
 	end
 
@@ -249,20 +293,20 @@ local function try_fire_scheduled_press(t)
 			record_sample(t, "skip_low_stamina_at_press", { unit_id = pending_id })
 		end
 
-		return
-	end
-
-	if not player_weapon_extension or not player_weapon_extension:action_input_is_currently_valid("weapon_action", SPECIAL_ACTION_INPUT, nil, t) then
-		if settings.debug_notify then
-			record_sample(t, "skip_invalid_action_input_at_press", { unit_id = pending_id })
-		end
+		controller.force_deadline_t = nil
 
 		return
 	end
 
-	controller.pending_attacker_id = pending_id
-	queue_parry_press(t)
-	controller.pending_attacker_id = nil
+	-- Open the window: hold weapon_extra_pressed true from here until deadline (or on_disabled),
+	-- letting the engine's own buffering find the exact valid frame to actually start the action.
+	controller.force_active = true
+	controller.cooldown_until_t = t + (settings.cooldown or 0.5)
+
+	if settings.debug_notify then
+		-- Marks a window opening, not proof it landed -- the blocked_attack sample is the proof.
+		record_sample(t, "pressed", { unit_id = pending_id })
+	end
 end
 
 -- Cheap gates shared by both detection feeds; evaluated on the (rare) event itself, not every
@@ -347,7 +391,7 @@ local function evaluate_threat(attacker_unit, known_target_unit, damage_t)
 		record_sample(t, "detected", { breed = breed.name, distance = distance, unit_id = unit_id })
 	end
 
-	local press_t
+	local press_t, deadline_t
 	if damage_t then
 		press_t = damage_t - (settings.pre_hit_margin or 0.2)
 		if press_t < t then
@@ -356,15 +400,22 @@ local function evaluate_threat(attacker_unit, known_target_unit, damage_t)
 			-- immediately on the very next fixed frame anyway).
 			press_t = t
 		end
+
+		-- Hold the window open past the real hit by a safety margin (matches action_parry_special's
+		-- own total_time budget) rather than closing it exactly at damage_t -- the engine's own
+		-- buffer/chain-time timing decides the real moment within the window, not us.
+		deadline_t = damage_t + 0.3
 	else
 		press_t = t + (settings.press_delay or 0)
+		-- No real damage_t on the non-host feed -- bound the window with a flat cap instead.
+		deadline_t = press_t + 0.3
 	end
 
-	-- Only one press can be pending at a time (force_special_press is a single flag, not a
-	-- queue), so a second detection while one is already scheduled doesn't get its own slot --
-	-- but it must not simply be dropped either: pressing late is as much a miss as not pressing
-	-- at all, so whichever threat's real hit comes first wins the slot.
-	if controller.pending_press_t and controller.pending_press_t <= press_t then
+	-- Only one press can be pending/active at a time (force_active is a single flag, not a
+	-- queue), so a second detection while one is already scheduled or active doesn't get its own
+	-- slot -- but it must not simply be dropped either: pressing late is as much a miss as not
+	-- pressing at all, so whichever threat's real hit comes first wins the slot.
+	if controller.force_active or (controller.pending_press_t and controller.pending_press_t <= press_t) then
 		if settings.debug_notify then
 			record_sample(t, "skip_already_scheduled", { breed = breed.name, distance = distance, unit_id = unit_id })
 		end
@@ -373,6 +424,7 @@ local function evaluate_threat(attacker_unit, known_target_unit, damage_t)
 	end
 
 	controller.pending_press_t = press_t
+	controller.force_deadline_t = deadline_t
 	controller.pending_attacker_id = unit_id
 end
 
@@ -396,9 +448,9 @@ mod:hook_safe(CLASS.PlayerUnitWeaponExtension, "fixed_update", function(self, un
 	try_fire_scheduled_press(gameplay_time())
 end)
 
--- One-shot force of weapon_extra_pressed -- the only raw input special_action's input_sequence
--- actually looks for (default_melee_action_input_setup.lua). Mirrors SprintRapierHeavy's own
--- InputService._get/_get_simulate hook shape.
+-- Forces weapon_extra_pressed true for every read while a window is open (controller.force_active
+-- -- see the file header for why this is a sustained window, not a one-shot). Mirrors
+-- SprintRapierHeavy's own InputService._get/_get_simulate hook shape.
 local function input_hook(func, self, action_name)
 	local value = func(self, action_name)
 
@@ -406,8 +458,7 @@ local function input_hook(func, self, action_name)
 		return value
 	end
 
-	if controller.force_special_press then
-		controller.force_special_press = false
+	if controller.force_active then
 		return true
 	end
 
@@ -491,8 +542,9 @@ end
 mod.on_disabled = function()
 	player_weapon_extension = nil
 	controller.pending_press_t = nil
+	controller.force_deadline_t = nil
 	controller.pending_attacker_id = nil
-	controller.force_special_press = false
+	controller.force_active = false
 	refresh_enabled_setting()
 end
 
