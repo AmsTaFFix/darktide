@@ -30,6 +30,18 @@
 --     Best effort: press after a flat press_delay, like before, and keep filtering by distance
 --     only.
 --
+-- Multi-hit combos (host feed only, e.g. cultist_berzerker's attack_move_combo_01_fast: 7 hits
+-- spanning 0.67s-2.95s, BreedActions attack_anim_damage_timings as a list instead of one number):
+-- the game only calls _start_attack_anim ONCE for the whole combo, so we only ever detect the
+-- first hit -- there's no separate event per later hit to catch. Confirmed live: a berzerker's
+-- first hit got parried every time, later hits in the same combo sometimes didn't, because they
+-- landed after the first press's 1s window (+0.3s margin) had already closed. Fix: read
+-- scratchpad.attack_timings/.attack_sweep_timings (the full offset list, already available at
+-- _start_attack_anim time) and hold the window open until the LAST hit instead of the first --
+-- see last_combo_hit_t(). We don't press again for each later hit; holding weapon_extra_pressed
+-- true for the whole span lets special_action's own chain_time = 0.9 re-arm (valid from inside a
+-- still-running parry, same mechanism as the hold-the-window fix above) catch each one on its own.
+--
 -- Triggering forces InputService's weapon_extra_pressed for one read, the same mechanism
 -- SprintRapierHeavy uses for its own sequence. bot_queue_action_input (what the game's own bots
 -- use to block/push) was tried first and does NOT work here: ActionInputParser only drains its
@@ -219,6 +231,30 @@ local function attacker_id(unit)
 	return unit and unit_spawner and unit_spawner:game_object_id(unit)
 end
 
+-- For a multi-hit combo (bt_melee_attack_action.lua sets scratchpad.attack_timings, a plain list
+-- of offsets from scratchpad.start_time, or scratchpad.attack_sweep_timings, a list of {start,
+-- stop} pairs for a sweep combo), returns the absolute gameplay-time of the LAST hit. nil for a
+-- single-hit attack (neither table present) or if start_time is missing.
+local function last_combo_hit_t(scratchpad)
+	local start_time = scratchpad.start_time
+	if not start_time then
+		return nil
+	end
+
+	local timings = scratchpad.attack_timings or scratchpad.attack_sweep_timings
+	if not timings then
+		return nil
+	end
+
+	local last = timings[#timings]
+	local offset = type(last) == "table" and last[2] or last
+	if type(offset) ~= "number" then
+		return nil
+	end
+
+	return start_time + offset
+end
+
 local function record_sample(t, event, extra)
 	last_event = event or last_event
 
@@ -323,9 +359,12 @@ end
 --
 -- known_target_unit: the attacker's real target, when we actually know it (host feed, passed in
 -- straight from _start_attack_anim's own parameter) -- nil when we don't (non-host rpc feed).
--- damage_t: the real gameplay-time timestamp of the hit (host feed) or nil (non-host feed, where
--- we fall back to a flat settings.press_delay after detection instead).
-local function evaluate_threat(attacker_unit, known_target_unit, damage_t)
+-- damage_t: the real gameplay-time timestamp of the (first) hit (host feed) or nil (non-host
+-- feed, where we fall back to a flat settings.press_delay after detection instead).
+-- last_hit_t: for a multi-hit combo, the real gameplay-time timestamp of its LAST hit (host feed
+-- only, nil otherwise or when the attack isn't a combo) -- see the file header for why this
+-- stretches the window instead of needing a detection per hit.
+local function evaluate_threat(attacker_unit, known_target_unit, damage_t, last_hit_t)
 	if not (mod:is_enabled() and setting_enabled) then
 		return
 	end
@@ -410,10 +449,15 @@ local function evaluate_threat(attacker_unit, known_target_unit, damage_t)
 			press_t = t
 		end
 
-		-- Hold the window open past the real hit by a safety margin (matches action_parry_special's
-		-- own total_time budget) rather than closing it exactly at damage_t -- the engine's own
-		-- buffer/chain-time timing decides the real moment within the window, not us.
-		deadline_t = damage_t + 0.3
+		-- Hold the window open past the real hit (or, for a multi-hit combo, past its LAST hit --
+		-- see last_hit_t/the file header) by a safety margin rather than closing it exactly at the
+		-- hit itself -- the engine's own buffer/chain-time timing decides the real moment within
+		-- the window, not us. For a multi-hit combo this is what covers hits after the first: we
+		-- never re-detect each one (the game doesn't call _start_attack_anim again mid-combo), but
+		-- holding weapon_extra_pressed true for the combo's whole span lets the weapon's own
+		-- special_action -> action_parry_special chain (chain_time = 0.9, re-triggerable from
+		-- inside a still-running parry) re-arm itself in time for each later hit on its own.
+		deadline_t = (last_hit_t or damage_t) + 0.3
 	else
 		press_t = t + (settings.press_delay or 0)
 		-- No real damage_t on the non-host feed -- bound the window with a flat cap instead.
@@ -515,7 +559,7 @@ mod:hook_safe(CLASS.BtMeleeAttackAction, "_start_attack_anim", function(self, un
 		return
 	end
 
-	evaluate_threat(unit, target_unit, damage_t)
+	evaluate_threat(unit, target_unit, damage_t, last_combo_hit_t(scratchpad))
 end)
 
 -- Telemetry only -- fires for anyone's block, including a manual one, but we only tag samples
