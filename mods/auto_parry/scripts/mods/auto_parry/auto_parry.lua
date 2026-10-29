@@ -429,7 +429,17 @@ local function evaluate_threat(attacker_unit, known_target_unit, damage_t, last_
 		return
 	end
 
-	local distance = Vector3_distance(player_pos, attacker_pos)
+	-- Confirmed live in a real mission: POSITION_LOOKUP can occasionally hand back something that
+	-- isn't a plain Vector3 for a given unit (observed as "bad argument #2 to 'Vector3_distance'
+	-- (Vector3 expected, got userdata)") -- never reproduced in Psykhanium, where every unit is
+	-- locally simulated; in a real mission both player and minion positions can be network-
+	-- replicated, and the exact circumstance (mid-spawn/despawn, a companion, a bot) wasn't
+	-- pinned down. pcall rather than crash the hook over a single bad read -- same defensive
+	-- pattern as gameplay_time() above.
+	local distance_ok, distance = pcall(Vector3_distance, player_pos, attacker_pos)
+	if not distance_ok then
+		return
+	end
 
 	-- Host feed only (known_target_unit ~= nil): don't gate on current distance. A charging/
 	-- moving attack's windup can start well outside trigger_range and still land, because the
