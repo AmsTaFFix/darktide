@@ -1,1 +1,1 @@
-Unofficial, temporary bugfix build of "Psych Ward" by Fracticality.
+Adds Mission Board, Psykhanium, and vendor shortcuts to the character select screen — queue missions, train, and shop without loading the Hub. Unofficial build of "Psych Ward" by Fracticality.
