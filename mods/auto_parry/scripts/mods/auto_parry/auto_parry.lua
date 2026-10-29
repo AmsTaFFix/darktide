@@ -20,18 +20,30 @@
 --     rpc feed above is silent on a host because AnimationSystem only registers the client RPCs
 --     `if not self._is_server`.
 --
--- Triggering uses PlayerUnitActionInputExtension:bot_queue_action_input, the same seam the game's
--- own bots use to block/push (bt_bot_melee_action.lua) -- it feeds the real action-input queue
--- (hierarchy-correct, network-predicted), unlike forcing InputService values (which is what
--- SprintRapierHeavy does for its own sprint/attack/slide sequence, and which would make the two
--- mods fight: SprintRapierHeavy treats a real weapon_extra_pressed as manual player intervention
--- and aborts its own cycle).
+-- Triggering forces InputService's weapon_extra_pressed for one read, the same mechanism
+-- SprintRapierHeavy uses for its own sequence. bot_queue_action_input (what the game's own bots
+-- use to block/push) was tried first and does NOT work here: ActionInputParser only drains its
+-- bot queue when `self._player:is_human_controlled()` is false (action_input_parser.lua, the
+-- `else` branch that calls _update_bot_action_input_requests) -- for a real human-controlled
+-- player, queued bot requests are never consumed and the 5-slot ring buffer overflows (confirmed
+-- live). Forcing the real input is the only seam that works for the local player.
+--
+-- This can collide with SprintRapierHeavy, which also hooks InputService and treats a real
+-- weapon_extra_pressed as manual player intervention, aborting its own sprint-attack-slide cycle
+-- when it sees one. That is accepted, not fought: a parry interrupting the speed-tech cycle is the
+-- right priority (defending beats speed-running), and SprintRapierHeavy doesn't itself drive
+-- weapon_extra_pressed, so there's nothing to race -- only auto_parry writes it.
 local mod = get_mod("auto_parry")
 
 local Breed = require("scripts/utilities/breed")
 
+-- HEALTH_ALIVE is created once in global_tables.lua and lives for the game's whole process, so
+-- caching it as an upvalue at mod-load time is safe (same pattern SprintRapierHeavy uses).
+-- POSITION_LOOKUP is NOT that kind of global: PositionLookupManager (re)creates it per mission via
+-- rawset(_G, "POSITION_LOOKUP", ...) and nils it out on destroy, so it must be read fresh from _G
+-- every time instead of cached -- caching it here previously meant a permanent nil, captured
+-- before any mission had ever loaded a PositionLookupManager.
 local HEALTH_ALIVE = HEALTH_ALIVE
-local POSITION_LOOKUP = POSITION_LOOKUP
 local Managers = Managers
 local ScriptUnit = ScriptUnit
 local Unit = Unit
@@ -44,10 +56,14 @@ local RAPIER_WEAPONS = {
 }
 
 local SPECIAL_ACTION_INPUT = "special_action"
+local SPECIAL_RAW_INPUT = "weapon_extra_pressed"
 
 local controller = {
 	pending_press_t = nil,
 	cooldown_until_t = 0,
+	-- One-shot: the InputService hook reads this, returns true for weapon_extra_pressed exactly
+	-- once, and clears it. No queue, nothing to overflow.
+	force_special_press = false,
 }
 
 local player_weapon_extension = nil
@@ -159,13 +175,7 @@ local function record_sample(t, event, extra)
 end
 
 local function queue_parry_press(t)
-	local player_unit = local_player_unit()
-	local action_input_extension = player_unit and ScriptUnit.has_extension(player_unit, "action_input_system")
-	if not action_input_extension then
-		return
-	end
-
-	action_input_extension:bot_queue_action_input("weapon_action", SPECIAL_ACTION_INPUT)
+	controller.force_special_press = true
 	controller.cooldown_until_t = t + (settings.cooldown or 0.5)
 	controller.pending_press_t = nil
 
@@ -207,8 +217,13 @@ local function evaluate_threat(attacker_unit)
 	end
 
 	local player_unit = local_player_unit()
-	local player_pos = player_unit and POSITION_LOOKUP[player_unit]
-	local attacker_pos = POSITION_LOOKUP[attacker_unit]
+	local position_lookup = _G.POSITION_LOOKUP
+	if not position_lookup then
+		return
+	end
+
+	local player_pos = player_unit and position_lookup[player_unit]
+	local attacker_pos = position_lookup[attacker_unit]
 	if not player_pos or not attacker_pos then
 		return
 	end
@@ -281,6 +296,27 @@ mod:hook_safe(CLASS.PlayerUnitWeaponExtension, "fixed_update", function(self, un
 	end
 end)
 
+-- One-shot force of weapon_extra_pressed -- the only raw input special_action's input_sequence
+-- actually looks for (default_melee_action_input_setup.lua). Mirrors SprintRapierHeavy's own
+-- InputService._get/_get_simulate hook shape.
+local function input_hook(func, self, action_name)
+	local value = func(self, action_name)
+
+	if self.type ~= "Ingame" or action_name ~= SPECIAL_RAW_INPUT then
+		return value
+	end
+
+	if controller.force_special_press then
+		controller.force_special_press = false
+		return true
+	end
+
+	return value
+end
+
+mod:hook(CLASS.InputService, "_get", input_hook)
+mod:hook(CLASS.InputService, "_get_simulate", input_hook)
+
 -- Non-host feed: the server broadcasts this the instant an enemy's attack animation starts
 -- (bt_melee_attack_action.lua -> minion_animation_extension.lua:anim_event -> here). Silent on a
 -- host -- AnimationSystem only registers the client RPCs `if not self._is_server`.
@@ -347,6 +383,7 @@ end
 mod.on_disabled = function()
 	player_weapon_extension = nil
 	controller.pending_press_t = nil
+	controller.force_special_press = false
 	refresh_enabled_setting()
 end
 
