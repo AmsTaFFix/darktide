@@ -99,6 +99,14 @@ return {
 		en = "When the True Level mod is installed and enabled, take the player level from it (following its display style). Turn off to always use Squad HUD's own level calculation.",
 		ru = "Если установлен и включён мод True Level, брать уровень игрока из него (с учётом его display style). Выключите, чтобы всегда использовать собственный расчёт уровня Squad HUD.",
 	},
+	integration_true_level_havoc_rank = {
+		en = "Show havoc rank",
+		ru = "Показывать ранг Havoc",
+	},
+	integration_true_level_havoc_rank_description = {
+		en = "Show the player's Havoc clearance rank next to the level (for level 30+ players). Requires the True Level integration. Turn off to show the level only.",
+		ru = "Показывать ранг допуска Havoc рядом с уровнем (для игроков 30+ уровня). Требует интеграцию с True Level. Выключите, чтобы показывать только уровень.",
+	},
 	squadhud_placement = {
 		en = string.rep("\194\160", 8) .. "Position, opacity & scale",
 		ru = string.rep("\194\160", 8) .. "Позиция, прозрачность и масштаб",

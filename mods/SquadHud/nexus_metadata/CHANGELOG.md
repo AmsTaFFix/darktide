@@ -7,6 +7,7 @@ All notable changes to this unofficial reupload of Squad HUD are documented here
 ### Added
 - Compatibility with the True Level mod: when it is installed and enabled, the teammate level in the expanded view is taken from True Level and follows its display style (shown as a compact total so it fits the slot).
 - An Integrations option to turn the True Level level source on or off; when off, Squad HUD uses its own level calculation.
+- When the True Level compatibility is on, a level-30+ teammate's Havoc clearance rank is shown next to their level in the expanded view, with a nested Integrations toggle to turn it on or off.
 
 ## 1.5.1 — 2026-10-28
 

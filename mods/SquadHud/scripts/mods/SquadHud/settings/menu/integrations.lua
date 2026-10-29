@@ -34,6 +34,15 @@ return {
 			title = "integration_true_level",
 			tooltip_text = "integration_true_level_description",
 			default_value = d("integration_true_level", true),
+			sub_widgets = {
+				{
+					setting_id = "integration_true_level_havoc_rank",
+					type = "checkbox",
+					title = "integration_true_level_havoc_rank",
+					tooltip_text = "integration_true_level_havoc_rank_description",
+					default_value = d("integration_true_level_havoc_rank", true),
+				},
+			},
 		},
 	},
 }
