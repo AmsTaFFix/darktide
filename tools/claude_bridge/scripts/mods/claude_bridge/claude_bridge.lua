@@ -5,8 +5,9 @@ local io_backend = mod:io_dofile("claude_bridge/scripts/mods/claude_bridge/bridg
 local commands = mod:io_dofile("claude_bridge/scripts/mods/claude_bridge/bridge/commands")
 
 -- Tracks the highest request id handled so far, so a mod reload (which re-runs this file)
--- doesn't re-execute the last request, and so a stale request.lua left over from a previous
--- session is ignored on startup.
+-- doesn't re-execute the last request. A persistent_table survives a reload but not a game
+-- restart, so last_id comes back as 0 on launch; _seed_last_id() (below) and _poll()'s own
+-- deletion of a handled request.lua are what actually keep a stale request from replaying.
 mod.context = mod:persistent_table("claude_bridge_context", { last_id = 0 })
 
 local _request_path
@@ -20,6 +21,22 @@ local function _paths()
 
   return _request_path, _response_path
 end
+
+-- response.txt's 'id:' line is the durable record of the last request actually handled, since
+-- it is on disk (unlike mod.context, which resets on a game restart). Adopt it once at load so a
+-- leftover request.lua from a previous session can't be mistaken for a new one.
+local function _seed_last_id()
+  if mod.context.last_id ~= 0 then
+    return
+  end
+
+  local _, response_path = _paths()
+  local content = io_backend.read_file(response_path)
+  local id = content and tonumber(string.match(content, "id:%s*(%d+)"))
+  mod.context.last_id = id or 0
+end
+
+_seed_last_id()
 
 local function _format_value(value)
   local value_type = type(value)
@@ -131,6 +148,10 @@ local function _poll()
   mod.context.last_id = id
 
   _execute(id, request)
+
+  -- Consume the request so it can never be replayed (e.g. by last_id resetting on a game
+  -- restart before response.txt exists yet, or a corrupt response.txt seed).
+  io_backend.delete_file(request_path)
 end
 
 local _poll_elapsed = 0

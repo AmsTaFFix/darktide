@@ -58,4 +58,9 @@ function M.loadstring(code, chunk_name)
   return _loadstring(code, chunk_name)
 end
 
+-- Removes the file at 'path'. Returns true if it is gone afterwards.
+function M.delete_file(path)
+  return _os.remove(path) and true or false
+end
+
 return M
