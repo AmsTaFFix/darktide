@@ -18,7 +18,10 @@
 --   - BtMeleeAttackAction.enter -- fires only on a host (Psykhanium/Meat Grinder), where the
 --     behavior tree itself runs locally. Used so this mod has a repeatable test environment; the
 --     rpc feed above is silent on a host because AnimationSystem only registers the client RPCs
---     `if not self._is_server`.
+--     `if not self._is_server`. Unlike the rpc feed, this one fires for ANY nearby minion's melee
+--     attack regardless of who it's aimed at -- on the host we can and do filter that down to
+--     "aimed at me" via the attacker's own blackboard (see targets_player()); the rpc feed has no
+--     equivalent signal to filter on and stays distance-only.
 --
 -- Triggering forces InputService's weapon_extra_pressed for one read, the same mechanism
 -- SprintRapierHeavy uses for its own sequence. bot_queue_action_input (what the game's own bots
@@ -44,6 +47,13 @@ local Breed = require("scripts/utilities/breed")
 -- every time instead of cached -- caching it here previously meant a permanent nil, captured
 -- before any mission had ever loaded a PositionLookupManager.
 local HEALTH_ALIVE = HEALTH_ALIVE
+-- BLACKBOARDS is also process-lifetime stable (global_tables.lua: "BLACKBOARDS = BLACKBOARDS or
+-- Script.new_map(256)"), safe to cache like HEALTH_ALIVE -- individual unit entries come and go,
+-- but the table itself never gets replaced or nilled. Entries only exist for units whose
+-- BlackboardExtension ran through local_init, i.e. only on the server/host (Psykhanium/Meat
+-- Grinder for us); on a non-host client BLACKBOARDS[enemy] is always nil. Used below to filter
+-- out attacks that aren't actually aimed at the local player.
+local BLACKBOARDS = BLACKBOARDS
 local Managers = Managers
 local ScriptUnit = ScriptUnit
 local Unit = Unit
@@ -155,6 +165,24 @@ local function is_rapier()
 	return RAPIER_WEAPONS[weapon_template.name] == true
 end
 
+-- true/false = the attacker's real current target, read off its own blackboard (host-only --
+-- see the BLACKBOARDS comment above). nil = can't tell (no blackboard entry, i.e. a non-host
+-- client), in which case the caller keeps today's distance-only behavior rather than reject.
+--
+-- This is the fix for "reacts to the wrong animation": BtMeleeAttackAction.enter fires for ANY
+-- nearby minion's melee attack, including ones aimed at a teammate or a bot, not just the local
+-- player -- distance alone can't tell those apart, so without this a press and its cooldown get
+-- spent on an attack that was never going to hit us, right as a real one might be starting.
+local function targets_player(attacker_unit, player_unit)
+	local blackboard = BLACKBOARDS and BLACKBOARDS[attacker_unit]
+	local perception = blackboard and blackboard.perception
+	if not perception then
+		return nil
+	end
+
+	return perception.target_unit == player_unit
+end
+
 local function record_sample(t, event, extra)
 	last_event = event or last_event
 
@@ -230,6 +258,14 @@ local function evaluate_threat(attacker_unit)
 
 	local distance = Vector3_distance(player_pos, attacker_pos)
 	if distance > (settings.trigger_range or 3.0) then
+		return
+	end
+
+	if targets_player(attacker_unit, player_unit) == false then
+		if settings.debug_notify then
+			record_sample(gameplay_time(), "skip_wrong_target", { breed = breed.name, distance = distance })
+		end
+
 		return
 	end
 
