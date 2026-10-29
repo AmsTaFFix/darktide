@@ -11,8 +11,6 @@ Consequence for agents on those three: **keep diffs minimal and upstream-mergeab
 
 - `SprintRapierHeavy` — our **own** mod, not a vendored fork: derived from ImperialSkoom's `SprintKnifeHeavy` (Nexus mod 799), retargeted at the Dueling Sword (`combatsword_p3` family) instead of the Combat Knife. No upstream to stay mergeable with, so the minimal-diff rule above doesn't bind it — ordinary feature-development judgment applies instead.
 
-**Discontinued:** `auto_parry` (auto-parry gameplay automation) was built, live-debugged, and then removed — real Darktide missions always run on a dedicated server, so the client-side detection it needed only ever worked in Psykhanium/Meat Grinder. See `docs/auto-parry-investigation.md` before re-attempting anything similar.
-
 ## Layout
 
 ```
