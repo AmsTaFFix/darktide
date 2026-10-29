@@ -96,22 +96,29 @@ local RAPIER_WEAPONS = {
 
 local SPECIAL_RAW_INPUT = "weapon_extra_pressed"
 
+-- At most this many concurrent enemies get their own tracked threat. Holding weapon_extra_pressed
+-- true is cost-free to repeat (see the file header), so there's no reason to multiplex a single
+-- slot when several real attackers are live at once -- confirmed live in a 3-enemy Psykhanium
+-- fight: with a single slot, one attacker went ~8s and several attacks unanswered while the other
+-- two kept winning the "sooner" contest for it (skip_already_scheduled with no blocked_attack
+-- following before that attacker's next detection). A handful of slots is enough for how crowded
+-- melee range around one player actually gets; this isn't a setting because there's no real
+-- tradeoff to tune -- more slots than concurrent real attackers is free, fewer just reintroduces
+-- the starvation this exists to fix.
+local MAX_PENDING_THREATS = 3
+
 local controller = {
-	-- Gameplay-time timestamp of the next scheduled window start, or nil if none is pending. Set
-	-- by evaluate_threat (one at a time -- a second detection while one is already pending is
-	-- dropped, see skip_already_scheduled); consumed by try_fire_scheduled_press once t reaches
-	-- it, which then opens the forcing window (see force_active/force_deadline_t below) instead
-	-- of firing a single frame.
-	pending_press_t = nil,
-	-- Gameplay-time timestamp of the real hit (plus margin) that the window must not be held past.
-	-- Set alongside pending_press_t.
-	force_deadline_t = nil,
-	-- Diagnostic only, travels alongside pending_press_t/force_deadline_t so the eventual "pressed"
-	-- sample can be tagged with which attacker it was scheduled for.
-	pending_attacker_id = nil,
-	cooldown_until_t = 0,
-	-- True for the whole scheduled window [pending_press_t, force_deadline_t], not just one frame:
-	-- the InputService hook returns true for weapon_extra_pressed on every read while this is set,
+	-- Up to MAX_PENDING_THREATS entries, one per attacker, each
+	-- { press_t, deadline_t, attacker_id, checked }. press_t/deadline_t as before (see
+	-- evaluate_threat); checked is false until the one-time per-slot cooldown/stamina/weapon gate
+	-- has run (at or after press_t) -- see update_threats.
+	threats = {},
+	-- [attacker_id] = gameplay-time until which a *new* threat from that same attacker won't open
+	-- a fresh window -- per-attacker, not global, so one enemy's pace never throttles a different
+	-- concurrent one. Set once a slot's gate passes (see update_threats).
+	attacker_cooldown_until = {},
+	-- True whenever any threat in `threats` is within its own [press_t, deadline_t] window: the
+	-- InputService hook returns true for weapon_extra_pressed on every read while this is set,
 	-- letting the engine's own special_action buffer (see the file header) retry the chain
 	-- validation each fixed frame instead of us deciding pass/fail ourselves in one shot.
 	force_active = false,
@@ -235,78 +242,80 @@ local function record_sample(t, event, extra)
 	end
 end
 
--- Runs the checks that only matter right before actually opening a press window (our own press
--- cooldown, stamina, weapon still out) -- deliberately NOT done at detection/scheduling time,
+-- Drives every tracked threat independently: for each one, once t reaches its own press_t, runs
+-- the checks that only matter right before actually opening its window (per-attacker cooldown,
+-- stamina, weapon still out) exactly once -- deliberately NOT done at detection/scheduling time,
 -- since a host-feed detection can be scheduled up to ~1s in the future and the player's state is
--- far more likely to have changed by then than to still match what it was at detection. Rejecting
--- a scheduled window here does NOT un-schedule the threat it came from -- a real attack that got
--- this far already won the "which threat gets the one pending slot" contest in evaluate_threat, so
--- if it still can't be pressed (e.g. cooldown hasn't cleared), that's a genuine miss, not
--- something to retry.
+-- far more likely to have changed by then than to still match what it was at detection. A threat
+-- that fails its gate is simply dropped (a genuine miss, not retried) -- it already won its slot
+-- in evaluate_threat, same as before.
 --
--- Deliberately does NOT check action_input_is_currently_valid here anymore -- see the file header
--- for why: holding weapon_extra_pressed true for the window lets the engine's own special_action
+-- Deliberately does NOT check action_input_is_currently_valid here -- see the file header for
+-- why: holding weapon_extra_pressed true for the window lets the engine's own special_action
 -- buffer retry that exact check every fixed frame on its own, which is strictly more capable than
--- a single check made here ever could be.
-local function try_fire_scheduled_press(t)
-	if controller.force_active then
-		-- Already holding the window open -- just watch for it closing.
-		if t > controller.force_deadline_t then
-			controller.force_active = false
-			controller.force_deadline_t = nil
+-- a single check made here ever could be. force_active ends up true whenever ANY threat is
+-- currently within its own window -- holding the raw input true is cost-free to repeat, so
+-- multiple simultaneously-active windows need no special handling beyond "at least one wants it".
+local function update_threats(t)
+	local threats = controller.threats
+	local any_active = false
+	local i = 1
+
+	while i <= #threats do
+		local threat = threats[i]
+		local drop = false
+
+		if not threat.checked and t >= threat.press_t then
+			threat.checked = true
+
+			local cooldown_until = controller.attacker_cooldown_until[threat.attacker_id]
+			if cooldown_until and t < cooldown_until then
+				if settings.debug_notify then
+					record_sample(t, "skip_cooldown_at_press", { unit_id = threat.attacker_id })
+				end
+
+				drop = true
+			elseif not is_rapier() then
+				drop = true
+			else
+				local player_unit = local_player_unit()
+				local player_uds = unit_data_extension(player_unit)
+				local stamina = player_uds and player_uds:read_component("stamina")
+				local stamina_fraction = stamina and stamina.current_fraction or 1
+				if stamina_fraction <= (settings.min_stamina_fraction or 0.15) then
+					if settings.debug_notify then
+						record_sample(t, "skip_low_stamina_at_press", { unit_id = threat.attacker_id })
+					end
+
+					drop = true
+				else
+					controller.attacker_cooldown_until[threat.attacker_id] = t + (settings.cooldown or 0.5)
+
+					if settings.debug_notify then
+						-- Marks this threat's window opening, not proof it landed -- the
+						-- blocked_attack sample is the proof.
+						record_sample(t, "pressed", { unit_id = threat.attacker_id })
+					end
+				end
+			end
 		end
 
-		return
-	end
-
-	local press_t = controller.pending_press_t
-	if not press_t or t < press_t then
-		return
-	end
-
-	local pending_id = controller.pending_attacker_id
-	controller.pending_press_t = nil
-	controller.pending_attacker_id = nil
-
-	if t < controller.cooldown_until_t then
-		if settings.debug_notify then
-			record_sample(t, "skip_cooldown_at_press", { unit_id = pending_id })
+		if not drop and threat.checked and t > threat.deadline_t then
+			drop = true
 		end
 
-		controller.force_deadline_t = nil
+		if drop then
+			table.remove(threats, i)
+		else
+			if threat.checked and t <= threat.deadline_t then
+				any_active = true
+			end
 
-		return
-	end
-
-	if not is_rapier() then
-		controller.force_deadline_t = nil
-
-		return
-	end
-
-	local player_unit = local_player_unit()
-	local player_uds = unit_data_extension(player_unit)
-	local stamina = player_uds and player_uds:read_component("stamina")
-	local stamina_fraction = stamina and stamina.current_fraction or 1
-	if stamina_fraction <= (settings.min_stamina_fraction or 0.15) then
-		if settings.debug_notify then
-			record_sample(t, "skip_low_stamina_at_press", { unit_id = pending_id })
+			i = i + 1
 		end
-
-		controller.force_deadline_t = nil
-
-		return
 	end
 
-	-- Open the window: hold weapon_extra_pressed true from here until deadline (or on_disabled),
-	-- letting the engine's own buffering find the exact valid frame to actually start the action.
-	controller.force_active = true
-	controller.cooldown_until_t = t + (settings.cooldown or 0.5)
-
-	if settings.debug_notify then
-		-- Marks a window opening, not proof it landed -- the blocked_attack sample is the proof.
-		record_sample(t, "pressed", { unit_id = pending_id })
-	end
+	controller.force_active = any_active
 end
 
 -- Cheap gates shared by both detection feeds; evaluated on the (rare) event itself, not every
@@ -396,7 +405,7 @@ local function evaluate_threat(attacker_unit, known_target_unit, damage_t)
 		press_t = damage_t - (settings.pre_hit_margin or 0.2)
 		if press_t < t then
 			-- The hit is imminent or the margin overshoots what's left of the windup -- press
-			-- now rather than schedule into the past (which try_fire_scheduled_press would fire
+			-- now rather than schedule into the past (which update_threats would fire
 			-- immediately on the very next fixed frame anyway).
 			press_t = t
 		end
@@ -411,21 +420,39 @@ local function evaluate_threat(attacker_unit, known_target_unit, damage_t)
 		deadline_t = press_t + 0.3
 	end
 
-	-- Only one press can be pending/active at a time (force_active is a single flag, not a
-	-- queue), so a second detection while one is already scheduled or active doesn't get its own
-	-- slot -- but it must not simply be dropped either: pressing late is as much a miss as not
-	-- pressing at all, so whichever threat's real hit comes first wins the slot.
-	if controller.force_active or (controller.pending_press_t and controller.pending_press_t <= press_t) then
-		if settings.debug_notify then
-			record_sample(t, "skip_already_scheduled", { breed = breed.name, distance = distance, unit_id = unit_id })
+	-- A fresh detection for an attacker that already has a tracked threat replaces it outright --
+	-- this is a new attack, the old scheduling is stale.
+	local threats = controller.threats
+	for index, threat in ipairs(threats) do
+		if threat.attacker_id == unit_id then
+			threats[index] = { press_t = press_t, deadline_t = deadline_t, attacker_id = unit_id, checked = false }
+			return
 		end
+	end
 
+	if #threats < MAX_PENDING_THREATS then
+		threats[#threats + 1] = { press_t = press_t, deadline_t = deadline_t, attacker_id = unit_id, checked = false }
 		return
 	end
 
-	controller.pending_press_t = press_t
-	controller.force_deadline_t = deadline_t
-	controller.pending_attacker_id = unit_id
+	-- All slots are full with other attackers -- bump whichever currently tracked threat is the
+	-- LEAST urgent (latest press_t) if this new one is more urgent than it, so the slots always
+	-- hold the soonest known threats rather than whichever happened to arrive first.
+	local latest_index, latest_press_t = nil, -math.huge
+	for index, threat in ipairs(threats) do
+		if threat.press_t > latest_press_t then
+			latest_index, latest_press_t = index, threat.press_t
+		end
+	end
+
+	if latest_index and press_t < latest_press_t then
+		threats[latest_index] = { press_t = press_t, deadline_t = deadline_t, attacker_id = unit_id, checked = false }
+		return
+	end
+
+	if settings.debug_notify then
+		record_sample(t, "skip_already_scheduled", { breed = breed.name, distance = distance, unit_id = unit_id })
+	end
 end
 
 mod:hook_safe(CLASS.PlayerUnitWeaponExtension, "on_slot_wielded", function(self)
@@ -435,8 +462,8 @@ mod:hook_safe(CLASS.PlayerUnitWeaponExtension, "on_slot_wielded", function(self)
 	end
 end)
 
--- Drives the scheduled-press timer. Piggybacks on PlayerUnitWeaponExtension.fixed_update, which
--- already fires every fixed step for the local player regardless of which action is running.
+-- Drives all tracked threats. Piggybacks on PlayerUnitWeaponExtension.fixed_update, which already
+-- fires every fixed step for the local player regardless of which action is running.
 mod:hook_safe(CLASS.PlayerUnitWeaponExtension, "fixed_update", function(self, unit)
 	local player_unit = local_player_unit()
 	if not (player_unit and unit == player_unit) then
@@ -445,7 +472,7 @@ mod:hook_safe(CLASS.PlayerUnitWeaponExtension, "fixed_update", function(self, un
 
 	player_weapon_extension = self
 
-	try_fire_scheduled_press(gameplay_time())
+	update_threats(gameplay_time())
 end)
 
 -- Forces weapon_extra_pressed true for every read while a window is open (controller.force_active
@@ -541,9 +568,8 @@ end
 
 mod.on_disabled = function()
 	player_weapon_extension = nil
-	controller.pending_press_t = nil
-	controller.force_deadline_t = nil
-	controller.pending_attacker_id = nil
+	controller.threats = {}
+	controller.attacker_cooldown_until = {}
 	controller.force_active = false
 	refresh_enabled_setting()
 end

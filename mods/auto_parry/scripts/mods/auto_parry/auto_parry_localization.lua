@@ -51,7 +51,7 @@ return {
 		en = "Cooldown (s)",
 	},
 	cooldown_description = {
-		en = "Minimum pause between actual presses (checked right before pressing, not at detection -- a threat detected during the pause is still scheduled, just pressed late if the cooldown hasn't cleared by its real hit time).",
+		en = "Minimum pause between actual presses from the SAME attacker (checked right before pressing, not at detection). Does not throttle a different, concurrent attacker.",
 	},
 	debug_notify = {
 		en = "Debug Notifications",
