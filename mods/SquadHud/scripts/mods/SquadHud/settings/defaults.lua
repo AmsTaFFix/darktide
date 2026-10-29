@@ -5,6 +5,7 @@ local defaults = {
 	hud_layout_scale = 0.8,
 	integration_custom_hud = false,
 	integration_true_level = true,
+	integration_true_level_havoc_rank = true,
 	opacity = 1.0,
 	position_x = 50,
 	position_y = 780,

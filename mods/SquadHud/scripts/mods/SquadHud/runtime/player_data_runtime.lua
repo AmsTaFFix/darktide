@@ -331,6 +331,8 @@ local presence_promises = {}
 local account_presence_promises = {}
 local true_level_promises = {}
 local xp_settings = mod:persistent_table("player_total_level_xp_settings")
+local havoc_rank_cache = mod:persistent_table("player_havoc_rank_cache")
+local havoc_rank_promises = {}
 
 local function true_levels_from_progression(progression)
 	local level_array = xp_settings.level_array
@@ -847,6 +849,81 @@ function M.player_total_level(player)
 	return nil
 end
 
+-- Havoc clearance rank ("⌃ N"). True Level's public cache does not expose havoc_rank reliably
+-- (it fills it lazily while rendering its own suppressed UI), so SquadHud fetches it itself via
+-- the game's havoc service, keyed by account_id. The cache stores a number, or false once a fetch
+-- came back without a rank, so we never re-request. Only valid for max-level (30+) characters.
+local function cached_havoc_rank(account_id)
+	local rank = account_id and havoc_rank_cache[account_id]
+
+	if type(rank) == "number" then
+		return rank
+	end
+
+	return nil
+end
+
+local function fetch_player_havoc_rank(account_id)
+	if not account_id or havoc_rank_promises[account_id] or havoc_rank_cache[account_id] ~= nil then
+		return
+	end
+
+	local havoc_service = Managers.data_service and Managers.data_service.havoc
+
+	if not havoc_service or type(havoc_service.havoc_rank_cadence_high) ~= "function" then
+		return
+	end
+
+	local ok, promise = pcall(function()
+		return havoc_service:havoc_rank_cadence_high(account_id)
+	end)
+
+	if not ok or not promise or type(promise.next) ~= "function" then
+		return
+	end
+
+	havoc_rank_promises[account_id] = promise
+
+	promise:next(function(rank)
+		havoc_rank_cache[account_id] = type(rank) == "number" and rank or false
+		havoc_rank_promises[account_id] = nil
+	end):catch(function()
+		havoc_rank_promises[account_id] = nil
+	end)
+end
+
+-- Havoc-rank marker glyph, in the game's icon-font private-use range (same range as the platform
+-- and class icons SquadHud already renders in these text passes). This is the compact "havoc"
+-- symbol True Level uses, so the narrow relation_status slot shows e.g. "213 2" rather
+-- than the game's verbose "Clearance Level" localized string, which would overflow.
+local HAVOC_RANK_ICON = "\238\129\143"
+
+local function append_havoc_rank(level_text, player, current_level)
+	if mod:get("integration_true_level_havoc_rank") == false then
+		return level_text
+	end
+
+	if type(current_level) ~= "number" or current_level < 30 then
+		return level_text
+	end
+
+	local account_id = player_account_id(player)
+
+	if not account_id then
+		return level_text
+	end
+
+	local rank = cached_havoc_rank(account_id)
+
+	if type(rank) ~= "number" then
+		fetch_player_havoc_rank(account_id)
+
+		return level_text
+	end
+
+	return level_text .. " " .. HAVOC_RANK_ICON .. tostring(rank)
+end
+
 -- Optional integration with the True Level mod (get_mod("true_level"), by Zombine). When present
 -- and enabled, its cache is the source of truth for the level number and its display_style setting
 -- decides the format, so SquadHud agrees with what True Level shows elsewhere. Resolved lazily and
@@ -909,11 +986,15 @@ function M.player_level_text(player)
 				-- SquadHud's relation_status slot is narrow (~42px), so True Level's "separate"
 				-- form ("30 (+183)") is shown as the compact single true_level number here, same
 				-- as "total". "default"/"none" keep the plain current level.
+				local level_text
+
 				if display_style == "total" or display_style == "separate" then
-					return tostring(true_levels.true_level or current_level)
+					level_text = tostring(true_levels.true_level or current_level)
+				else
+					level_text = tostring(current_level)
 				end
 
-				return tostring(current_level)
+				return append_havoc_rank(level_text, player, current_level)
 			end
 		end
 	end
