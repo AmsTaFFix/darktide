@@ -108,7 +108,10 @@ return { id = 1, cmd = "eval", code = "return 1 + 1" }
 
 `id` must be a plain increasing number — the mod only acts on `id` greater than the last one it
 handled (tracked in a `persistent_table`, so it survives a mod reload too) — so bump it on every
-request, don't reuse or reset it. Then poll-read `response.txt` (plain text, not JSON):
+request, don't reuse or reset it. The mod deletes `request.lua` once it's handled, and on a game
+restart (when the `persistent_table` resets to 0) it re-seeds the last handled id from
+`response.txt`'s `id:` line — so don't hand-delete `response.txt` while `request.lua` still
+exists, or a stale request could be replayed. Then poll-read `response.txt` (plain text, not JSON):
 
 ```
 id: 1
