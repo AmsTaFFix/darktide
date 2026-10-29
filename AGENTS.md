@@ -10,6 +10,7 @@ Personal Darktide mod workspace. The mods under `mods/` are **vendored forks of 
 Consequence for agents on those three: **keep diffs minimal and upstream-mergeable.** Fix the bug and stop — no restyling, no refactors, no renames, no "while I'm here" cleanup. A smaller diff merges faster upstream.
 
 - `SprintRapierHeavy` — our **own** mod, not a vendored fork: derived from ImperialSkoom's `SprintKnifeHeavy` (Nexus mod 799), retargeted at the Rapier (`combatsword_p3` family) instead of the Combat Knife. No upstream to stay mergeable with, so the minimal-diff rule above doesn't bind it — ordinary feature-development judgment applies instead.
+- `auto_parry` — our **own** mod, no upstream. Gameplay automation (auto-presses the Rapier's weapon special to parry), not a UI/bugfix mod — dev-only, deliberately kept unpublished (no `nexus/*.zip`, no Nexus page) unless the user decides otherwise.
 
 ## Layout
 
@@ -33,6 +34,7 @@ Mods:
 - **crosshair_hud** — custom HUD element with Toughness/Health/Coherency/Ammo/Reload/Grenade/Ability indicators near the crosshair.
 - **SquadHud** — four compact strike-team panels (health, toughness, statuses, distance, resources, loadout) replacing the vanilla squad UI. Note: dir is PascalCase `mods/SquadHud/` (not snake_case), matching its upstream dir and `new_mod("SquadHud")` id; a multi-file mod under `scripts/mods/SquadHud/`. Commit scope is written `squad_hud` per the Git convention below.
 - **SprintRapierHeavy** — automates the Rapier (`combatsword_p3`) sprint-attack-slide speed tech: sprint, attack, slide right as speed peaks, chain into the next attack. Two techniques (Light, recommended; Heavy, experimental), tuned from live Claude Bridge telemetry. Our own mod, no upstream.
+- **auto_parry** — auto-presses the Rapier's weapon special (`action_parry_special`) when a nearby enemy starts a melee attack, so the attack is parried and the free riposte (`action_attack_special_riposte`) fires. Detects the windup via `rpc_minion_anim_event` (real missions) or `BtMeleeAttackAction.enter` (Psykhanium/Meat Grinder, host-only). Our own mod, no upstream.
 
 ## Reference submodules
 
