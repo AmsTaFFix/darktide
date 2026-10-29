@@ -849,10 +849,10 @@ function M.player_total_level(player)
 	return nil
 end
 
--- Havoc clearance rank ("⌃ N"). True Level's public cache does not expose havoc_rank reliably
--- (it fills it lazily while rendering its own suppressed UI), so SquadHud fetches it itself via
--- the game's havoc service, keyed by account_id. The cache stores a number, or false once a fetch
--- came back without a rank, so we never re-request. Only valid for max-level (30+) characters.
+-- Havoc clearance rank. The game only exposes it through an async presence/backend call
+-- (Managers.data_service.havoc:havoc_rank_cadence_high), so SquadHud fetches it itself, keyed by
+-- account_id. The cache stores a number, or false once a fetch came back without a rank, so we
+-- never re-request. Only valid for max-level (30+) characters.
 local function cached_havoc_rank(account_id)
 	local rank = account_id and havoc_rank_cache[account_id]
 
@@ -893,17 +893,17 @@ local function fetch_player_havoc_rank(account_id)
 end
 
 -- Havoc-rank marker glyph, in the game's icon-font private-use range (same range as the platform
--- and class icons SquadHud already renders in these text passes). This is the compact "havoc"
--- symbol True Level uses, so the narrow relation_status slot shows e.g. "213 2" rather
--- than the game's verbose "Clearance Level" localized string, which would overflow.
+-- and class icons SquadHud already renders in these text passes). It is the compact havoc symbol,
+-- so the level slot shows e.g. "213 2" rather than the game's verbose "Clearance Level"
+-- localized string, which would overflow.
 local HAVOC_RANK_ICON = "\238\129\143"
 
-local function append_havoc_rank(level_text, player, current_level)
-	if mod:get("integration_true_level_havoc_rank") == false then
+local function append_havoc_rank(level_text, player, level_value)
+	if mod:get("squadhud_show_havoc_rank") == false then
 		return level_text
 	end
 
-	if type(current_level) ~= "number" or current_level < 30 then
+	if type(level_value) ~= "number" or level_value < 30 then
 		return level_text
 	end
 
@@ -924,84 +924,16 @@ local function append_havoc_rank(level_text, player, current_level)
 	return level_text .. " " .. HAVOC_RANK_ICON .. tostring(rank)
 end
 
--- Optional integration with the True Level mod (get_mod("true_level"), by Zombine). When present
--- and enabled, its cache is the source of truth for the level number and its display_style setting
--- decides the format, so SquadHud agrees with what True Level shows elsewhere. Resolved lazily and
--- guarded like the ModderTools helpers above, so SquadHud works unchanged when True Level is absent.
-local _true_level_mod
-
-local function true_level_mod()
-	if mod:get("integration_true_level") == false then
-		return nil
-	end
-
-	local tl = _true_level_mod
-
-	if not tl then
-		local get_mod_fn = rawget(_G, "get_mod")
-
-		if type(get_mod_fn) ~= "function" then
-			return nil
-		end
-
-		local ok, found = pcall(get_mod_fn, "true_level")
-
-		if not ok or not found then
-			return nil
-		end
-
-		_true_level_mod = found
-		tl = found
-	end
-
-	if type(tl.get_true_levels) ~= "function" or type(tl.is_enabled) ~= "function" or type(tl.get) ~= "function" then
-		return nil
-	end
-
-	local ok_enabled, enabled = pcall(tl.is_enabled, tl)
-
-	if not ok_enabled or not enabled then
-		return nil
-	end
-
-	return tl
-end
-
+-- The teammate level is always SquadHud's own full true-level calculation (M.player_total_level),
+-- with the havoc clearance rank appended for max-level (30+) players when the havoc setting is on.
 function M.player_level_text(player)
-	local tl = true_level_mod()
-
-	if tl then
-		local profile = player_profile(player)
-		local character_id = profile and player_character_id(player, profile)
-
-		if character_id then
-			local ok, true_levels = pcall(tl.get_true_levels, character_id)
-			local current_level = ok and type(true_levels) == "table" and true_levels.current_level
-
-			if type(current_level) == "number" then
-				local ok_style, display_style = pcall(tl.get, tl, "display_style")
-
-				display_style = ok_style and display_style or "default"
-
-				-- SquadHud's relation_status slot is narrow (~42px), so True Level's "separate"
-				-- form ("30 (+183)") is shown as the compact single true_level number here, same
-				-- as "total". "default"/"none" keep the plain current level.
-				local level_text
-
-				if display_style == "total" or display_style == "separate" then
-					level_text = tostring(true_levels.true_level or current_level)
-				else
-					level_text = tostring(current_level)
-				end
-
-				return append_havoc_rank(level_text, player, current_level)
-			end
-		end
-	end
-
 	local total = M.player_total_level(player)
 
-	return total and tostring(total) or nil
+	if not total then
+		return nil
+	end
+
+	return append_havoc_rank(tostring(total), player, total)
 end
 
 function M.player_unit(player)

@@ -1,3 +1,1 @@
-Added compatibility with the True Level mod: the teammate level in the expanded view is taken from True Level when it is installed and enabled, following its display style.
-Added an Integrations toggle to turn the True Level level source on or off (when off, Squad HUD uses its own level calculation).
-Added display of a level-30+ teammate's Havoc clearance rank next to their level in the expanded view when the True Level compatibility is enabled, with a nested toggle to turn it on or off.
+Added display of a level-30+ teammate's Havoc clearance rank next to their level in the expanded view, with a toggle to turn it off. Works on its own and does not require any other mod.
