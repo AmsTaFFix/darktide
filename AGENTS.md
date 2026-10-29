@@ -7,7 +7,9 @@ Personal Darktide mod workspace. The mods under `mods/` are **vendored forks of 
 - `psych_ward`, `crosshair_hud` — forks of mods by **Fracticality** (`github.com/fracticality/darktide-mods`), fixes submitted back upstream as PRs (psych_ward: PR #51, issue #49; crosshair_hud: PR #53, issue #52).
 - `SquadHud` — fork of the Squad HUD mod by **rrmllnv** (`github.com/rrmllnv/darktide-mods`, Nexus mod 844), reviving it after the author went inactive. The bundled patch 1.13 fix is a community fix by **LucLeto**, vendored as-is; there is no upstream PR for it yet.
 
-Consequence for agents: **keep diffs minimal and upstream-mergeable.** Fix the bug and stop — no restyling, no refactors, no renames, no "while I'm here" cleanup. A smaller diff merges faster upstream.
+Consequence for agents on those three: **keep diffs minimal and upstream-mergeable.** Fix the bug and stop — no restyling, no refactors, no renames, no "while I'm here" cleanup. A smaller diff merges faster upstream.
+
+- `SprintRapierHeavy` — our **own** mod, not a vendored fork: derived from ImperialSkoom's `SprintKnifeHeavy` (Nexus mod 799), retargeted at the Rapier (`combatsword_p3` family) instead of the Combat Knife. No upstream to stay mergeable with, so the minimal-diff rule above doesn't bind it — ordinary feature-development judgment applies instead.
 
 ## Layout
 
@@ -30,6 +32,7 @@ Mods:
 - **psych_ward** — adds Hub features (Mortis Trials, Mission Board, vendors, contracts, crafting, inventory, cosmetics, penances, Psykhanium) to the Character Select menu.
 - **crosshair_hud** — custom HUD element with Toughness/Health/Coherency/Ammo/Reload/Grenade/Ability indicators near the crosshair.
 - **SquadHud** — four compact strike-team panels (health, toughness, statuses, distance, resources, loadout) replacing the vanilla squad UI. Note: dir is PascalCase `mods/SquadHud/` (not snake_case), matching its upstream dir and `new_mod("SquadHud")` id; a multi-file mod under `scripts/mods/SquadHud/`. Commit scope is written `squad_hud` per the Git convention below.
+- **SprintRapierHeavy** — holds the melee heavy windup while sprinting with a Rapier (Duelling Sword), same mechanic as ImperialSkoom's SprintKnifeHeavy but for `combatsword_p3_m1/m2/m3` instead of the Combat Knife. Our own mod, no upstream.
 
 ## Reference submodules
 

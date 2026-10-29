@@ -1,5 +1,5 @@
 [size=4][b]Description[/b][/size]
-[color=#D4D4D8]Unofficial, temporary bugfix build of [url=https://www.nexusmods.com/warhammer40kdarktide/mods/89]"Psych Ward"[/url] by [url=https://www.nexusmods.com/profile/Fracticality?gameId=4943]Fracticality[/url].
+[color=#D4D4D8]Unofficial build of [url=https://www.nexusmods.com/warhammer40kdarktide/mods/89]"Psych Ward"[/url] by [url=https://www.nexusmods.com/profile/Fracticality?gameId=4943]Fracticality[/url].
 
 Game updates keep breaking [url=https://www.nexusmods.com/warhammer40kdarktide/mods/89]Psych Ward[/url] in new ways. This page tracks and fixes those bugs as they turn up, with the occasional small quality-of-life tweak - see each version's changelog (Files tab) for exactly what changed.
 
