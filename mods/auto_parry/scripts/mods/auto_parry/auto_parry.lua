@@ -73,6 +73,9 @@ local controller = {
 	-- evaluate_threat (one at a time -- a second detection while one is already pending is
 	-- dropped, see skip_already_scheduled), consumed and cleared by try_fire_scheduled_press.
 	pending_press_t = nil,
+	-- Diagnostic only, travels alongside pending_press_t so the eventual "pressed" sample can be
+	-- tagged with which attacker it was scheduled for.
+	pending_attacker_id = nil,
 	cooldown_until_t = 0,
 	-- One-shot: the InputService hook reads this, returns true for weapon_extra_pressed exactly
 	-- once, and clears it. No queue, nothing to overflow.
@@ -169,6 +172,11 @@ local function is_rapier()
 	return RAPIER_WEAPONS[weapon_template.name] == true
 end
 
+local function attacker_id(unit)
+	local unit_spawner = Managers.state and Managers.state.unit_spawner
+	return unit and unit_spawner and unit_spawner:game_object_id(unit)
+end
+
 local function record_sample(t, event, extra)
 	last_event = event or last_event
 
@@ -179,6 +187,10 @@ local function record_sample(t, event, extra)
 		distance = extra and extra.distance,
 		block_broken = extra and extra.block_broken,
 		is_perfect_block = extra and extra.is_perfect_block,
+		-- Diagnostic only, for correlating samples to one specific attacker across a dump (e.g.
+		-- "does this enemy's very first attack ever show up here at all") -- not used by any
+		-- gameplay logic.
+		unit_id = extra and extra.unit_id,
 	}
 
 	trace.samples[trace.next_index] = sample
@@ -193,7 +205,7 @@ local function queue_parry_press(t)
 	controller.cooldown_until_t = t + (settings.cooldown or 0.5)
 
 	if settings.debug_notify then
-		record_sample(t, "pressed")
+		record_sample(t, "pressed", { unit_id = controller.pending_attacker_id })
 	end
 end
 
@@ -212,11 +224,13 @@ local function try_fire_scheduled_press(t)
 		return
 	end
 
+	local pending_id = controller.pending_attacker_id
 	controller.pending_press_t = nil
+	controller.pending_attacker_id = nil
 
 	if t < controller.cooldown_until_t then
 		if settings.debug_notify then
-			record_sample(t, "skip_cooldown_at_press")
+			record_sample(t, "skip_cooldown_at_press", { unit_id = pending_id })
 		end
 
 		return
@@ -232,7 +246,7 @@ local function try_fire_scheduled_press(t)
 	local stamina_fraction = stamina and stamina.current_fraction or 1
 	if stamina_fraction <= (settings.min_stamina_fraction or 0.15) then
 		if settings.debug_notify then
-			record_sample(t, "skip_low_stamina_at_press")
+			record_sample(t, "skip_low_stamina_at_press", { unit_id = pending_id })
 		end
 
 		return
@@ -240,13 +254,15 @@ local function try_fire_scheduled_press(t)
 
 	if not player_weapon_extension or not player_weapon_extension:action_input_is_currently_valid("weapon_action", SPECIAL_ACTION_INPUT, nil, t) then
 		if settings.debug_notify then
-			record_sample(t, "skip_invalid_action_input_at_press")
+			record_sample(t, "skip_invalid_action_input_at_press", { unit_id = pending_id })
 		end
 
 		return
 	end
 
+	controller.pending_attacker_id = pending_id
 	queue_parry_press(t)
+	controller.pending_attacker_id = nil
 end
 
 -- Cheap gates shared by both detection feeds; evaluated on the (rare) event itself, not every
@@ -287,13 +303,14 @@ local function evaluate_threat(attacker_unit, known_target_unit, damage_t)
 	end
 
 	local player_unit = local_player_unit()
+	local unit_id = attacker_id(attacker_unit)
 
 	-- Host feed only (known_target_unit ~= nil): drop attacks aimed at someone/something else.
 	-- Without this, BtMeleeAttackAction's feed fires for ANY nearby minion's attack, spending a
 	-- press and its cooldown on a non-threat right as a real one might be starting.
 	if known_target_unit ~= nil and known_target_unit ~= player_unit then
 		if settings.debug_notify then
-			record_sample(gameplay_time(), "skip_wrong_target", { breed = breed.name })
+			record_sample(gameplay_time(), "skip_wrong_target", { breed = breed.name, unit_id = unit_id })
 		end
 
 		return
@@ -311,14 +328,23 @@ local function evaluate_threat(attacker_unit, known_target_unit, damage_t)
 	end
 
 	local distance = Vector3_distance(player_pos, attacker_pos)
-	if distance > (settings.trigger_range or 3.0) then
+
+	-- Host feed only (known_target_unit ~= nil): don't gate on current distance. A charging/
+	-- moving attack's windup can start well outside trigger_range and still land, because the
+	-- attacker closes the gap while it winds up -- we already know (from known_target_unit, just
+	-- above) that it's actually coming for us, and we schedule the press against the real hit
+	-- time regardless of where the attacker is right now, so distance-at-windup-start isn't a
+	-- useful filter here. Confirmed live: this was silently dropping some charging first strikes
+	-- (no "detected" sample at all) while a stationary attack from the same distance would pass.
+	-- The non-host feed has no target confirmation, so distance stays its only filter there.
+	if known_target_unit == nil and distance > (settings.trigger_range or 3.0) then
 		return
 	end
 
 	local t = gameplay_time()
 
 	if settings.debug_notify then
-		record_sample(t, "detected", { breed = breed.name, distance = distance })
+		record_sample(t, "detected", { breed = breed.name, distance = distance, unit_id = unit_id })
 	end
 
 	local press_t
@@ -340,13 +366,14 @@ local function evaluate_threat(attacker_unit, known_target_unit, damage_t)
 	-- at all, so whichever threat's real hit comes first wins the slot.
 	if controller.pending_press_t and controller.pending_press_t <= press_t then
 		if settings.debug_notify then
-			record_sample(t, "skip_already_scheduled", { breed = breed.name, distance = distance })
+			record_sample(t, "skip_already_scheduled", { breed = breed.name, distance = distance, unit_id = unit_id })
 		end
 
 		return
 	end
 
 	controller.pending_press_t = press_t
+	controller.pending_attacker_id = unit_id
 end
 
 mod:hook_safe(CLASS.PlayerUnitWeaponExtension, "on_slot_wielded", function(self)
@@ -425,6 +452,7 @@ mod:hook_safe(CLASS.PlayerUnitWeaponExtension, "blocked_attack", function(self, 
 		record_sample(gameplay_time(), "blocked_attack", {
 			block_broken = block_broken,
 			is_perfect_block = is_perfect_block,
+			unit_id = attacker_id(attacking_unit),
 		})
 	end
 end)
@@ -463,6 +491,7 @@ end
 mod.on_disabled = function()
 	player_weapon_extension = nil
 	controller.pending_press_t = nil
+	controller.pending_attacker_id = nil
 	controller.force_special_press = false
 	refresh_enabled_setting()
 end

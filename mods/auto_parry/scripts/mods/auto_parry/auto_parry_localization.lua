@@ -24,7 +24,7 @@ return {
 		en = "Trigger Range (m)",
 	},
 	trigger_range_description = {
-		en = "Only react to enemies within this distance.",
+		en = "In a real mission (non-host), where the attacker's real target is unknown: only react to enemies within this distance. In Psykhanium/Meat Grinder (host), the real target is known, so this isn't used -- a charging attack's windup can start outside this range and still land.",
 	},
 	pre_hit_margin = {
 		en = "Pre-Hit Margin (s)",
