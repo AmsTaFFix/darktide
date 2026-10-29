@@ -26,11 +26,17 @@ return {
 	trigger_range_description = {
 		en = "Only react to enemies within this distance.",
 	},
+	pre_hit_margin = {
+		en = "Pre-Hit Margin (s)",
+	},
+	pre_hit_margin_description = {
+		en = "In Psykhanium/Meat Grinder (host), where the real hit timing is known: press this long before the hit instead of the instant the windup is seen.",
+	},
 	press_delay = {
 		en = "Press Delay (s)",
 	},
 	press_delay_description = {
-		en = "Wait this long after the windup is detected before pressing the special. 0 presses immediately.",
+		en = "In a real mission (non-host), where the real hit timing is NOT known: wait this long after the windup is detected before pressing. 0 presses immediately.",
 	},
 	options_safety_and_debug = {
 		en = "Safety & Debug",

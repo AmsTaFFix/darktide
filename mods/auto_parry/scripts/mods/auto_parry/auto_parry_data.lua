@@ -34,9 +34,17 @@ return {
 						step_size_value = 0.5,
 					},
 					{
+						setting_id = "pre_hit_margin",
+						type = "numeric",
+						default_value = 0.2,
+						range = { 0, 0.5 },
+						decimals_number = 2,
+						step_size_value = 0.05,
+					},
+					{
 						setting_id = "press_delay",
 						type = "numeric",
-						default_value = 0,
+						default_value = 0.3,
 						range = { 0, 0.5 },
 						decimals_number = 2,
 						step_size_value = 0.05,
