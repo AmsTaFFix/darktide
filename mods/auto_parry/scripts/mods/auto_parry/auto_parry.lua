@@ -275,6 +275,10 @@ local function record_sample(t, event, extra)
 		-- "does this enemy's very first attack ever show up here at all") -- not used by any
 		-- gameplay logic.
 		unit_id = extra and extra.unit_id,
+		-- Diagnostic only: "host" (BtMeleeAttackAction._start_attack_anim, precise) or "non_host"
+		-- (rpc_minion_anim_event, best-effort) -- only set on "detected" samples, since that's the
+		-- only point evaluate_threat knows which feed produced the call.
+		feed = extra and extra.feed,
 	}
 
 	trace.samples[trace.next_index] = sample
@@ -442,7 +446,9 @@ local function evaluate_threat(attacker_unit, known_target_unit, damage_t, last_
 	local t = gameplay_time()
 
 	if settings.debug_notify then
-		record_sample(t, "detected", { breed = breed.name, distance = distance, unit_id = unit_id })
+		-- damage_t is only ever non-nil when this call came from the host feed
+		-- (_start_attack_anim) -- the non-host feed (rpc_minion_anim_event) always passes nil.
+		record_sample(t, "detected", { breed = breed.name, distance = distance, unit_id = unit_id, feed = damage_t and "host" or "non_host" })
 	end
 
 	local press_t, deadline_t
