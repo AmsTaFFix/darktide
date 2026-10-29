@@ -195,7 +195,9 @@ mods/<name>/nexus_metadata/
 
 `VERSION` = upstream Fracticality version plus our own bump, e.g. `2.0.6` on top of upstream `2.0.5b`. The user supplies the upstream base and when to bump — never invent or auto-bump a version.
 
-`CHANGELOG.md` is Keep-a-Changelog shaped, newest first: `## <version> — YYYY-MM-DD`, then `### Fixed`/`### Changed`/`### Added` with `-` bullets, one per user-visible effect (crash message or game patch where that's what the user recognizes, not commit hashes or file paths). Every version needs both a `CHANGELOG.md` entry and a matching `changelog/<version>.txt` plain-text slice with the same content (one item per line, no `-` dashes, no BBCode); the `.md` wins on conflict.
+`CHANGELOG.md` is Keep-a-Changelog shaped, newest first: `## <version> — YYYY-MM-DD`, then `### Fixed`/`### Changed`/`### Added` with `-` bullets, one per user-visible effect (crash message or game patch where that's what the user recognizes, not commit hashes or file paths).
+
+Unreleased work accumulates under a `## [Unreleased]` section pinned at the very top of `CHANGELOG.md`, above the newest released version, with the same `### Fixed`/`### Changed`/`### Added` subsections and `-` bullets. **Every merged change records its user-visible effect under `## [Unreleased]` as part of that change — do not bump `VERSION` and do not write a `changelog/<version>.txt` slice per fix.** This applies to all mods (`psych_ward`, `crosshair_hud`, `SquadHud`). Cutting a release is a separate, explicit step the user asks for (see **Releasing**): only then does `## [Unreleased]` become `## <version> — YYYY-MM-DD`, `VERSION` get bumped, and a matching `changelog/<version>.txt` plain-text slice get written with that version's items. A released version always needs both its `CHANGELOG.md` entry and its matching `changelog/<version>.txt` slice (one item per line, no `-` dashes, no BBCode); the `.md` wins on conflict.
 
 ## Development workflow
 
@@ -263,3 +265,5 @@ Commit only when asked. Never `git add -A`/`git add .` — `nexus/`, `.idea/`, `
 ## Releasing
 
 Page copy and changelog live in `mods/<mod>/nexus_metadata/` (see above). `nexus/<mod>_bugfix.zip` is hand-packed so it extracts to `mods/<mod>/`, built from `mods/<mod>/` only — never includes `nexus_metadata/`. Nexus mod ids: Psych Ward 89, Crosshair HUD 9. These pages are explicitly temporary — obsolete once Fracticality merges and releases the fix.
+
+Cutting a release (only when the user asks, with the version they supply): rename the `## [Unreleased]` section in `CHANGELOG.md` to `## <version> — YYYY-MM-DD`, bump `VERSION` to match, and write `changelog/<version>.txt` as a plain-text slice of exactly that version's items (one per line, no `-` dashes, no BBCode). Leave a fresh empty `## [Unreleased]` at the top for the next change.

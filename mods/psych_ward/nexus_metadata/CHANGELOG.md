@@ -2,6 +2,12 @@
 
 All notable changes to this bugfix reupload of Psych Ward are documented here. Base: upstream 1.7.1.
 
+## [Unreleased]
+
+### Fixed
+
+- Exiting the Psykhanium (Meat Grinder) no longer crashes with `managers.lua: attempt to index local 'manager' (a nil value)` after the Havoc board was opened from Character Select earlier in the session.
+
 ## 1.9.0 - 2026-10-28
 
 ### Added
