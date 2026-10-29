@@ -706,6 +706,10 @@ end)
 -- Opening the Havoc board from Character Select has no such manager, so the call indexes nil and
 -- crashes. The derived value (self._user_stat_id) is never read anywhere, and all havoc data comes
 -- from the backend, so stub the manager for the duration of the setup call to keep it harmless.
+-- Use rawset so the stub bypasses Managers.state's __newindex metamethod: a plain assignment would
+-- register "player_unit_spawn" in the engine's ManagersCreationOrder.state, and clearing it with
+-- nil does not unregister it, leaving a stale alias that crashes destroy_state_managers (a nil
+-- manager:delete()) on the next state teardown, e.g. exiting the Psykhanium.
 mod:hook(CLASS.HavocPlayView, "_setup_current_havoc_mission_data", function(func, self, ...)
   local state = Managers.state
   if state.player_unit_spawn ~= nil then
@@ -718,15 +722,15 @@ mod:hook(CLASS.HavocPlayView, "_setup_current_havoc_mission_data", function(func
       return 1
     end,
   }
-  state.player_unit_spawn = {
+  rawset(state, "player_unit_spawn", {
     owner = function()
       return stub_owner
     end,
-  }
+  })
 
   local success, result = pcall(func, self, ...)
 
-  state.player_unit_spawn = nil
+  rawset(state, "player_unit_spawn", nil)
 
   if not success then
     error(result)
