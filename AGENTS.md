@@ -32,7 +32,7 @@ Mods:
 - **psych_ward** — adds Hub features (Mortis Trials, Mission Board, vendors, contracts, crafting, inventory, cosmetics, penances, Psykhanium) to the Character Select menu.
 - **crosshair_hud** — custom HUD element with Toughness/Health/Coherency/Ammo/Reload/Grenade/Ability indicators near the crosshair.
 - **SquadHud** — four compact strike-team panels (health, toughness, statuses, distance, resources, loadout) replacing the vanilla squad UI. Note: dir is PascalCase `mods/SquadHud/` (not snake_case), matching its upstream dir and `new_mod("SquadHud")` id; a multi-file mod under `scripts/mods/SquadHud/`. Commit scope is written `squad_hud` per the Git convention below.
-- **SprintRapierHeavy** — holds the melee heavy windup while sprinting with a Rapier (Duelling Sword), same mechanic as ImperialSkoom's SprintKnifeHeavy but for `combatsword_p3_m1/m2/m3` instead of the Combat Knife. Our own mod, no upstream.
+- **SprintRapierHeavy** — automates the Rapier (`combatsword_p3`) sprint-attack-slide speed tech: sprint, attack, slide right as speed peaks, chain into the next attack. Two techniques (Light, recommended; Heavy, experimental), tuned from live Claude Bridge telemetry. Our own mod, no upstream.
 
 ## Reference submodules
 
