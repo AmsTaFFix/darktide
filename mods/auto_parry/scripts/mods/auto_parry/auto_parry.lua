@@ -42,6 +42,12 @@
 -- true for the whole span lets special_action's own chain_time = 0.9 re-arm (valid from inside a
 -- still-running parry, same mechanism as the hold-the-window fix above) catch each one on its own.
 --
+-- BtMeleeAttackAction.leave cancels a tracked threat the moment the attack itself actually ends
+-- (stagger/interrupt, death/despawn, or finishing normally) instead of waiting for our own
+-- estimated deadline -- without this, interrupting an attacker (e.g. by hitting it) left its
+-- threat armed, visibly raising the sword for a parry with nothing left to block. See the hook
+-- itself for why BtNode.leave (the base class) must NOT be used instead.
+--
 -- Triggering forces InputService's weapon_extra_pressed for one read, the same mechanism
 -- SprintRapierHeavy uses for its own sequence. bot_queue_action_input (what the game's own bots
 -- use to block/push) was tried first and does NOT work here: ActionInputParser only drains its
@@ -560,6 +566,35 @@ mod:hook_safe(CLASS.BtMeleeAttackAction, "_start_attack_anim", function(self, un
 	end
 
 	evaluate_threat(unit, target_unit, damage_t, last_combo_hit_t(scratchpad))
+end)
+
+-- Host feed: cancels a tracked threat the instant the attacker's own melee-attack node actually
+-- ends -- for ANY reason (reason == "aborted" covers a stagger/interrupt mid-attack, among other
+-- things; "done"/"failed" is the node's own run concluding normally). Without this, interrupting
+-- an attacker (e.g. by hitting it) left its threat armed until its original estimated deadline,
+-- visibly raising the sword for a parry that no longer has anything to block -- confirmed live.
+-- leave() is strictly more authoritative than our own last_hit_t estimate, so clearing on it is a
+-- correctness improvement even outside the interrupt case, not just a special-case workaround.
+--
+-- Must hook BtMeleeAttackAction.leave specifically, NOT the base BtNode.leave: BtNode installs a
+-- per-instance closure over itself at construction that dispatches into the *class table's* own
+-- leave (bt_node.lua's _init_leave_function), and subclassing copies fields by value rather than
+-- chaining metatables, so BtNode.leave itself would never actually fire for these nodes. `unit` is
+-- a real argument here, not `self` -- behavior-tree node objects are shared across every unit of a
+-- breed (one node instance serves all units running that tree), not one per unit.
+mod:hook_safe(CLASS.BtMeleeAttackAction, "leave", function(self, unit, breed, blackboard, scratchpad, action_data, t, reason, destroy)
+	local unit_id = attacker_id(unit)
+	if not unit_id then
+		return
+	end
+
+	local threats = controller.threats
+	for index, threat in ipairs(threats) do
+		if threat.attacker_id == unit_id then
+			table.remove(threats, index)
+			return
+		end
+	end
 end)
 
 -- Telemetry only -- fires for anyone's block, including a manual one, but we only tag samples
