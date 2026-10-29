@@ -3,7 +3,7 @@ return {
 		en = "auto_parry",
 	},
 	mod_description = {
-		en = "Auto-presses the Rapier's weapon special when a nearby enemy starts a melee attack, so it gets parried and the free riposte fires.",
+		en = "Auto-presses the Dueling Sword's weapon special when a nearby enemy starts a melee attack, so it gets parried and the free riposte fires.",
 	},
 	options_main = {
 		en = "Main",

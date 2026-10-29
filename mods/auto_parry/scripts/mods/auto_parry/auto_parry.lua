@@ -1,4 +1,4 @@
--- Auto-presses the Rapier's (Duelling Sword, combatsword_p3 family) weapon special when a nearby
+-- Auto-presses the Dueling Sword's (combatsword_p3 family) weapon special when a nearby
 -- minion begins a melee attack, so the attack is parried (action_parry_special) and the free
 -- riposte (action_attack_special_riposte) fires on its own via the weapon template's own
 -- running_action_state_to_action_input = { has_blocked = { input_name = "parry" } } chain.
