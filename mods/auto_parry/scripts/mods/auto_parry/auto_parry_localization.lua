@@ -51,7 +51,7 @@ return {
 		en = "Cooldown (s)",
 	},
 	cooldown_description = {
-		en = "Minimum pause between presses, so a dense horde can't trigger one per enemy per frame.",
+		en = "Minimum pause between actual presses (checked right before pressing, not at detection -- a threat detected during the pause is still scheduled, just pressed late if the cooldown hasn't cleared by its real hit time).",
 	},
 	debug_notify = {
 		en = "Debug Notifications",

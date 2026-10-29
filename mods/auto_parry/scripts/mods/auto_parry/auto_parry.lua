@@ -197,11 +197,15 @@ local function queue_parry_press(t)
 	end
 end
 
--- Runs the checks that only matter right before actually pressing (stamina, weapon still out,
--- whether special_action would even be accepted right now) -- deliberately NOT done at detection
--- time anymore, since a host-feed detection can be scheduled up to ~1s in the future and the
--- player's state is far more likely to have changed by then than to still match what it was at
--- detection.
+-- Runs the checks that only matter right before actually pressing (our own press cooldown,
+-- stamina, weapon still out, whether special_action would even be accepted right now) --
+-- deliberately NOT done at detection/scheduling time, since a host-feed detection can be
+-- scheduled up to ~1s in the future and the player's state (and whether an earlier press's
+-- cooldown has cleared yet) is far more likely to have changed by then than to still match what
+-- it was at detection. Rejecting a scheduled press here does NOT un-schedule the threat it came
+-- from -- a real attack that got this far already won the "which threat gets the one pending
+-- slot" contest in evaluate_threat, so if it still can't be pressed (e.g. cooldown hasn't
+-- cleared), that's a genuine miss, not something to retry.
 local function try_fire_scheduled_press(t)
 	local press_t = controller.pending_press_t
 	if not press_t or t < press_t then
@@ -209,6 +213,14 @@ local function try_fire_scheduled_press(t)
 	end
 
 	controller.pending_press_t = nil
+
+	if t < controller.cooldown_until_t then
+		if settings.debug_notify then
+			record_sample(t, "skip_cooldown_at_press")
+		end
+
+		return
+	end
 
 	if not is_rapier() then
 		return
@@ -304,21 +316,6 @@ local function evaluate_threat(attacker_unit, known_target_unit, damage_t)
 	end
 
 	local t = gameplay_time()
-	if t < controller.cooldown_until_t then
-		if settings.debug_notify then
-			record_sample(t, "skip_cooldown", { breed = breed.name, distance = distance })
-		end
-
-		return
-	end
-
-	if controller.pending_press_t then
-		if settings.debug_notify then
-			record_sample(t, "skip_already_scheduled", { breed = breed.name, distance = distance })
-		end
-
-		return
-	end
 
 	if settings.debug_notify then
 		record_sample(t, "detected", { breed = breed.name, distance = distance })
@@ -335,6 +332,18 @@ local function evaluate_threat(attacker_unit, known_target_unit, damage_t)
 		end
 	else
 		press_t = t + (settings.press_delay or 0)
+	end
+
+	-- Only one press can be pending at a time (force_special_press is a single flag, not a
+	-- queue), so a second detection while one is already scheduled doesn't get its own slot --
+	-- but it must not simply be dropped either: pressing late is as much a miss as not pressing
+	-- at all, so whichever threat's real hit comes first wins the slot.
+	if controller.pending_press_t and controller.pending_press_t <= press_t then
+		if settings.debug_notify then
+			record_sample(t, "skip_already_scheduled", { breed = breed.name, distance = distance })
+		end
+
+		return
 	end
 
 	controller.pending_press_t = press_t

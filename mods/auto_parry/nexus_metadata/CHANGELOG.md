@@ -10,3 +10,4 @@
 
 - In Psykhanium/Meat Grinder, stopped reacting to enemy attacks aimed at someone/something else -- it now checks the attacker's actual target, not just distance.
 - In Psykhanium/Meat Grinder, the parry no longer fires the instant a windup is seen -- it's now timed against the enemy's real hit, fixing both missed slow attacks (parry window closed before the hit landed) and wasted early presses.
+- Stopped silently dropping a detected attack just because an earlier one was still on cooldown or already scheduled -- the mod now always schedules the more urgent of two threats instead of discarding the newer one outright.
