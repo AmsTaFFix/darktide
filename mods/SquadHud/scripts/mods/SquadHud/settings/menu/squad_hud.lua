@@ -39,6 +39,15 @@ return {
 			title = "squadhud_show_teammate_level",
 			tooltip_text = "squadhud_show_teammate_level_description",
 			default_value = d("squadhud_show_teammate_level", true),
+			sub_widgets = {
+				{
+					setting_id = "squadhud_show_havoc_rank",
+					type = "checkbox",
+					title = "squadhud_show_havoc_rank",
+					tooltip_text = "squadhud_show_havoc_rank_description",
+					default_value = d("squadhud_show_havoc_rank", true),
+				},
+			},
 		},
 		{
 			setting_id = "squadhud_use_player_colors_for_names",
