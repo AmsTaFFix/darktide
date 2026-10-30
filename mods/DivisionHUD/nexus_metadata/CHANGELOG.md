@@ -4,6 +4,8 @@ All notable changes to this unofficial reupload of Division HUD are documented h
 
 ## [Unreleased]
 
+## 1.11.0 — 2026-10-30
+
 Community fixes by LucLeto.
 
 ### Fixed

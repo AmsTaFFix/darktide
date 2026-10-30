@@ -1,0 +1,5 @@
+Community fixes by LucLeto.
+Fixed the "attempt to call method 'remaining_ability_cooldown' (a nil value)" crash after the game's 1.13 patch, which replaced ability cooldowns with a regenerating resource. The combat-ability bar and ability icon now read charge and cooldown state from the new ability resource system, mirroring the vanilla ability HUD.
+Fixed the crash when entering the Meat Grinder, shooting range, or tutorial. The HUD no longer injects itself into those training-ground screens.
+Fixed tracked-deployable timers (Adamant blitz drone, Broker stimm field) for the patch's projectile and talent changes, so they register and count down again.
+
