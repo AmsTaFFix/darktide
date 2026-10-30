@@ -1,5 +1,71 @@
 local StimmCountdownCore = {}
 
+-- Game patch 1.13 turned ability cooldowns into a regenerating resource and removed
+-- PlayerUnitAbilityExtension:remaining_ability_cooldown / :max_ability_cooldown.
+-- This helper reconstructs the real seconds-to-next-charge from the resource model,
+-- mirroring the game's own regen math (player_unit_ability_extension.lua update loop):
+--   net_regen_per_second = (base + flat_buff) * modifier_buff - cost_per_second
+--   seconds = missing_resource / net_regen_per_second
+local function ability_resource_regen_per_second(ability_extension, ability_type, ability)
+	local buff_extension = ability_extension._buff_extension
+	local stat_buffs = buff_extension and buff_extension:stat_buffs() or {}
+	local max_resource = ability_extension:max_ability_resource(ability_type)
+	local base = (ability.resource_regen_per_second or 0)
+		+ max_resource * (ability.resource_regen_percent_per_second or 0)
+	local flat = stat_buffs[ability_type .. "_resource_flat_regen"] or 0
+	local modifier = stat_buffs[ability_type .. "_resource_regen_modifier"] or 1
+	local cost_per_second = ability_extension:get_ability_resource_cost_per_second(ability_type) or 0
+
+	return (base + flat) * modifier - cost_per_second
+end
+
+-- Returns remaining cooldown seconds, or nil when there is nothing to count down
+-- (ready, paused, no timed regen). Replaces the removed remaining_ability_cooldown.
+local function remaining_ability_cooldown(ability_extension, ability_type)
+	local abilities = ability_extension._equipped_abilities
+	local ability = abilities and abilities[ability_type]
+
+	if not ability or not ability_extension.missing_ability_resource_until_next_charge then
+		return nil
+	end
+
+	if ability_extension:is_ability_resource_regen_paused(ability_type) then
+		return nil
+	end
+
+	local missing, missing_percent = ability_extension:missing_ability_resource_until_next_charge(ability_type)
+
+	if not missing or missing <= 0 then
+		return 0
+	end
+
+	if ability.only_uses_charges then
+		return nil
+	end
+
+	-- Husk extensions (e.g. a spectated teammate while you are dead) have no buff
+	-- extension and error() on get_ability_resource_cost_per_second, so fall back to
+	-- the synced per-charge regen time there.
+	if not ability_extension._buff_extension then
+		local max_regen_time = ability_extension:max_regen_time_for_ability_charge(ability_type) or 0
+		local seconds = (missing_percent or 0) * max_regen_time
+
+		if seconds <= 0 then
+			return nil
+		end
+
+		return seconds
+	end
+
+	local rate = ability_resource_regen_per_second(ability_extension, ability_type, ability)
+
+	if rate <= 0 then
+		return nil
+	end
+
+	return missing / rate
+end
+
 local function is_finite_cooldown_seconds_for_ui(t)
 	if type(t) ~= "number" or t ~= t then
 		return false
@@ -115,7 +181,7 @@ function StimmCountdownCore.compute_pocketable_stimm_timer_state(player_unit, se
 	result.profile_id = matched_profile.id or matched_profile.ability_group
 
 	local ability_type = type(matched_profile.ability_type) == "string" and matched_profile.ability_type or "pocketable_ability"
-	local raw_remaining_cooldown = ability_extension:remaining_ability_cooldown(ability_type)
+	local raw_remaining_cooldown = remaining_ability_cooldown(ability_extension, ability_type)
 	local remaining_cooldown = is_finite_cooldown_seconds_for_ui(raw_remaining_cooldown) and raw_remaining_cooldown or nil
 	local has_cooldown = remaining_cooldown ~= nil
 
@@ -193,7 +259,7 @@ function StimmCountdownCore.compute_timer_display_for_consuming_mods(player_unit
 	end
 
 	if player_archetype == "broker" and show_cooldown then
-		local raw_cd = ability_extension:remaining_ability_cooldown("pocketable_ability")
+		local raw_cd = remaining_ability_cooldown(ability_extension, "pocketable_ability")
 		local remaining_cooldown = is_finite_cooldown_seconds_for_ui(raw_cd) and raw_cd or nil
 
 		if remaining_cooldown then
