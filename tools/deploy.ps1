@@ -30,7 +30,7 @@
 
 param(
     [string]$GameDir = "C:\Program Files (x86)\Steam\steamapps\common\Warhammer 40,000 DARKTIDE",
-    [string[]]$Mods = @("psych_ward", "crosshair_hud", "SquadHud", "SprintRapierHeavy", "claude_bridge"),
+    [string[]]$Mods = @("psych_ward", "crosshair_hud", "SquadHud", "SprintRapierHeavy", "DivisionHUD", "claude_bridge"),
     [switch]$SkipReload
 )
 

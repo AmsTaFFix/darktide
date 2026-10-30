@@ -6,8 +6,9 @@ Personal Darktide mod workspace. The mods under `mods/` are **vendored forks of 
 
 - `psych_ward`, `crosshair_hud` — forks of mods by **Fracticality** (`github.com/fracticality/darktide-mods`), fixes submitted back upstream as PRs (psych_ward: PR #51, issue #49; crosshair_hud: PR #53, issue #52).
 - `SquadHud` — fork of the Squad HUD mod by **rrmllnv** (`github.com/rrmllnv/darktide-mods`, Nexus mod 844), reviving it after the author went inactive. The bundled patch 1.13 fix is a community fix by **LucLeto**, vendored as-is; there is no upstream PR for it yet.
+- `DivisionHUD` — fork of the Division HUD mod by **rrmllnv** (`github.com/rrmllnv/darktide-mods`, Nexus mod 813), the Division-style combat HUD, reuploaded as an unofficial build. The community fixes are by **LucLeto** (same fixer as SquadHud), vendored as-is; there is no upstream PR for it yet.
 
-Consequence for agents on those three: **keep diffs minimal and upstream-mergeable.** Fix the bug and stop — no restyling, no refactors, no renames, no "while I'm here" cleanup. A smaller diff merges faster upstream.
+Consequence for agents on those four: **keep diffs minimal and upstream-mergeable.** Fix the bug and stop — no restyling, no refactors, no renames, no "while I'm here" cleanup. A smaller diff merges faster upstream.
 
 - `SprintRapierHeavy` — our **own** mod, not a vendored fork: derived from ImperialSkoom's `SprintKnifeHeavy` (Nexus mod 799), retargeted at the Dueling Sword (`combatsword_p3` family) instead of the Combat Knife. No upstream to stay mergeable with, so the minimal-diff rule above doesn't bind it — ordinary feature-development judgment applies instead.
 
@@ -32,6 +33,7 @@ Mods:
 - **psych_ward** — adds Hub features (Mortis Trials, Mission Board, vendors, contracts, crafting, inventory, cosmetics, penances, Psykhanium) to the Character Select menu.
 - **crosshair_hud** — custom HUD element with Toughness/Health/Coherency/Ammo/Reload/Grenade/Ability indicators near the crosshair.
 - **SquadHud** — four compact strike-team panels (health, toughness, statuses, distance, resources, loadout) replacing the vanilla squad UI. Note: dir is PascalCase `mods/SquadHud/` (not snake_case), matching its upstream dir and `new_mod("SquadHud")` id; a multi-file mod under `scripts/mods/SquadHud/`. Commit scope is written `squad_hud` per the Git convention below.
+- **DivisionHUD** — a The-Division-style combat HUD: health/toughness/stamina bars, resource and loadout boxes, ability/blitz timers, buff rows, plus enemy-target, alerts, proximity, and danger-zone panels, with optional vanilla-HUD suppression. Note: dir is PascalCase `mods/DivisionHUD/` (not snake_case), matching its upstream dir and `new_mod("DivisionHUD")` id; a multi-file mod under `scripts/mods/DivisionHUD/`. Commit scope is written `division_hud` per the Git convention below.
 - **SprintRapierHeavy** — automates the Dueling Sword (`combatsword_p3`) sprint-attack-slide speed tech: sprint, attack, slide right as speed peaks, chain into the next attack. Two techniques (Light, recommended; Heavy, experimental), tuned from live Claude Bridge telemetry. Our own mod, no upstream.
 
 ## Reference submodules
@@ -41,6 +43,7 @@ All submodules are reference material, `shallow = true`, never edited or committ
 - Grep `3rdparty/Darktide-Source-Code/scripts/` to verify a game class/method/field actually exists before hooking it.
 - Grep `3rdparty/Darktide-Mod-Framework/dmf/` for the DMF API (`mod:hook`, `mod:persistent_table`, etc).
 - `3rdparty/Zombine-Darktide-Mods/true_level/` — Zombine's True Level mod, the source for SquadHud's optional True Level integration (`get_mod("true_level")`: `get_true_levels(character_id)`, `is_enabled()`, `get("display_style")`).
+- `3rdparty/rrmllnv-Darktide-Mods/` — rrmllnv's full mod collection, the upstream source for both `SquadHud` (`SquadHud/`) and `DivisionHUD` (`DivisionHUD/`). Grep it to compare the vendored fork against pristine upstream, or to isolate a community-fix delta.
 - `3rdparty/` is 200+ MB and will dominate a repo-wide grep — scope searches to `mods/` by default.
 
 ## Lua conventions
@@ -200,7 +203,7 @@ mods/<name>/nexus_metadata/
 
 `CHANGELOG.md` is Keep-a-Changelog shaped, newest first: `## <version> — YYYY-MM-DD`, then `### Fixed`/`### Changed`/`### Added` with `-` bullets, one per user-visible effect (crash message or game patch where that's what the user recognizes, not commit hashes or file paths).
 
-Unreleased work accumulates under a `## [Unreleased]` section pinned at the very top of `CHANGELOG.md`, above the newest released version, with the same `### Fixed`/`### Changed`/`### Added` subsections and `-` bullets. **Every merged change records its user-visible effect under `## [Unreleased]` as part of that change — do not bump `VERSION` and do not write a `changelog/<version>.txt` slice per fix.** This applies to all mods (`psych_ward`, `crosshair_hud`, `SquadHud`). Cutting a release is a separate, explicit step the user asks for (see **Releasing**): only then does `## [Unreleased]` become `## <version> — YYYY-MM-DD`, `VERSION` get bumped, and a matching `changelog/<version>.txt` plain-text slice get written with that version's items. A released version always needs both its `CHANGELOG.md` entry and its matching `changelog/<version>.txt` slice (one item per line, no `-` dashes, no BBCode); the `.md` wins on conflict.
+Unreleased work accumulates under a `## [Unreleased]` section pinned at the very top of `CHANGELOG.md`, above the newest released version, with the same `### Fixed`/`### Changed`/`### Added` subsections and `-` bullets. **Every merged change records its user-visible effect under `## [Unreleased]` as part of that change — do not bump `VERSION` and do not write a `changelog/<version>.txt` slice per fix.** This applies to all mods (`psych_ward`, `crosshair_hud`, `SquadHud`, `DivisionHUD`). Cutting a release is a separate, explicit step the user asks for (see **Releasing**): only then does `## [Unreleased]` become `## <version> — YYYY-MM-DD`, `VERSION` get bumped, and a matching `changelog/<version>.txt` plain-text slice get written with that version's items. A released version always needs both its `CHANGELOG.md` entry and its matching `changelog/<version>.txt` slice (one item per line, no `-` dashes, no BBCode); the `.md` wins on conflict.
 
 ## Development workflow
 
