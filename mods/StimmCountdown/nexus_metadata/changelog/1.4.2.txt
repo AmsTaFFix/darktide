@@ -1,0 +1,1 @@
+Fixed the "attempt to call method 'remaining_ability_cooldown' (a nil value)" error spam after the game's 1.13 patch, which replaced ability cooldowns with a regenerating resource. The stimm timer now computes remaining cooldown from the new resource system and counts down correctly again.

@@ -1,0 +1,1 @@
+Unofficial reupload of "StimmCountdown" by RRMLLNV - shows a countdown for the Hive Scum (Broker) stimm syringe's active duration and cooldown, fixed for the game's patch 1.13. All credit to RRMLLNV.
