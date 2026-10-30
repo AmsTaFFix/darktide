@@ -1,0 +1,44 @@
+[size=4][b]Unofficial version[/b][/size]
+[color=#D4D4D8]This is an unofficial build of [url=https://www.nexusmods.com/warhammer40kdarktide/mods/653]StimmCountdown[/url] by [url=https://www.nexusmods.com/profile/RRMLLNV?gameId=4943]RRMLLNV[/url], reuploaded to keep it working after the game's patch 1.13. All credit for the mod goes to RRMLLNV - see the full credits at the bottom of this page. The original description follows.[/color]
+
+
+[b][size=4]Description[/size][/b]
+[color=#D4D4D8]Displays a countdown timer for the Hive Scum (Broker) class stimm ability, showing both the active-effect duration and the cooldown time.
+
+The timer appears next to the stimm slot in the HUD and automatically hides when not needed.
+
+Light green indicates active stimm effect duration; red indicates cooldown time.[/color]
+
+
+[size=4][b]Installation instructions[/b][/size]
+[color=#D4D4D8]1. Install and enable [url=https://www.nexusmods.com/warhammer40kdarktide/mods/8]Darktide Mod Framework[/url].
+2. Install this archive with Vortex, or extract it into <game>\mods\ so you get <game>\mods\StimmCountdown\.
+3. Make sure "StimmCountdown" is listed in <game>\mods\mod_load_order.txt.
+
+If you already use the original [url=https://www.nexusmods.com/warhammer40kdarktide/mods/653]StimmCountdown[/url], remove it first so you don't run two copies. Your mod settings are kept (same mod id).[/color]
+
+
+[size=4][b]Main features[/b][/size]
+[color=#D4D4D8][list]
+[*]Countdown timer next to the Broker stimm syringe slot: active-effect duration, then cooldown.[/*]
+[*]Color-coded phases, with per-color overrides for ready, active, and cooldown.[/*]
+[*]Optional on-screen notification sound when the stimm comes off cooldown.[/*]
+[*]Configurable font type and size, and whether seconds are shown with decimals.[/*]
+[*]Exposes a small API other HUD mods (such as Division HUD) can read to show the same countdown in their own layout.[/*]
+[/list][/color]
+
+
+[size=4][b]Requirements[/b][/size]
+[color=#D4D4D8][url=https://www.nexusmods.com/warhammer40kdarktide/mods/8]Darktide Mod Framework[/url].[/color]
+
+
+[size=4][b]Shout outs[/b][/size]
+[color=#D4D4D8]This is not my mod. StimmCountdown was made by [url=https://www.nexusmods.com/profile/RRMLLNV?gameId=4943]RRMLLNV[/url], and all credit for it goes to them.
+
+[list]
+[*]Original mod: [url=https://www.nexusmods.com/warhammer40kdarktide/mods/653]StimmCountdown on Nexus[/url][/*]
+[*]Original author: [url=https://www.nexusmods.com/profile/RRMLLNV?gameId=4943]RRMLLNV[/url][/*]
+[*]Source code: [url=https://github.com/rrmllnv/darktide-mods]github.com/rrmllnv/darktide-mods[/url][/*]
+[/list]
+
+Why this page exists: I reuploaded StimmCountdown as an unofficial build to keep it working for people who still use it, including as a dependency of Division HUD's pocket-stimm integration. If RRMLLNV returns and updates the original, please switch back to it. See the changelog tab for what was fixed.[/color]
