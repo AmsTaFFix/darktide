@@ -1,0 +1,241 @@
+local M = {}
+
+local function color_text(text, color)
+	if text == "" or type(color) ~= "table" then
+		return text
+	end
+
+	return "{#color(" .. tostring(color[2] or 255) .. "," .. tostring(color[3] or 255) .. "," .. tostring(color[4] or 255) .. ")}" .. text .. "{#reset()}"
+end
+
+local function round_to_int(value)
+	if value >= 0 then
+		return math.floor(value + 0.5)
+	end
+
+	return math.ceil(value - 0.5)
+end
+
+local function reset_widget(widget, max_debuff_slots)
+	if not widget or not widget.content or not widget.style then
+		return
+	end
+
+	widget.content.visible = false
+	widget.content.name_text = ""
+	widget.content.health_text = ""
+	widget.content.type_text = ""
+
+	local health_fill_style = widget.style.health_bar_fill
+	local default_size = health_fill_style and health_fill_style.default_size
+	local default_offset = health_fill_style and health_fill_style.default_offset
+
+	if health_fill_style and default_size then
+		health_fill_style.size[1] = default_size[1]
+		health_fill_style.size[2] = 0
+
+		if default_offset then
+			health_fill_style.offset[1] = default_offset[1]
+			health_fill_style.offset[2] = default_offset[2] + default_size[2]
+			health_fill_style.offset[3] = default_offset[3]
+		end
+	end
+
+	for i = 1, max_debuff_slots do
+		widget.content["debuff_text_" .. i] = ""
+		widget.content["debuff_text_" .. i .. "_outline_text"] = ""
+	end
+
+	widget.alpha_multiplier = 0
+	widget.dirty = true
+end
+
+local function reset_anim(self)
+	self._enemy_target_anim = {
+		state = "hidden",
+		timer = 0,
+		alpha = 0,
+		x_offset = self._enemy_target_hidden_x or 0,
+	}
+end
+
+function M.init(self, definitions)
+	self._enemy_target_max_debuff_slots = definitions.ENEMY_TARGET_MAX_DEBUFF_SLOTS or 6
+	self._enemy_target_alpha_mult = 0
+	self._enemy_target_slide_px = (definitions and definitions.ENEMY_TARGET_SLIDE_PX) or 40
+	self._enemy_target_enter_dur = (definitions and definitions.ENEMY_TARGET_ENTER_DUR) or 0.2
+	self._enemy_target_exit_dur = (definitions and definitions.ENEMY_TARGET_EXIT_DUR) or 0.16
+	self._enemy_target_hidden_x = -self._enemy_target_slide_px
+
+	reset_anim(self)
+
+	local widgets_by_name = self._widgets_by_name
+	local widget = widgets_by_name and widgets_by_name.enemy_target
+
+	reset_widget(widget, self._enemy_target_max_debuff_slots)
+
+	if self.set_scenegraph_position then
+		self:set_scenegraph_position("division_enemy_target_area", self._enemy_target_hidden_x or 0, 0)
+	end
+end
+
+function M.update(self, widget, opacity, dt)
+	if not widget or not widget.content or not widget.style then
+		return
+	end
+
+	dt = (type(dt) == "number" and dt == dt and dt > 0) and dt or 0
+
+	local max_debuff_slots = self._enemy_target_max_debuff_slots or 9
+	local data = self._enemy_target_data or {}
+	local is_requested = data.active == true
+	local alpha = self._enemy_target_alpha_mult or 0
+	local alpha_speed = is_requested and 10 or 6
+	local anim = self._enemy_target_anim
+	local hidden_x = self._enemy_target_hidden_x or 0
+	local enter_dur = self._enemy_target_enter_dur or 0.2
+	local exit_dur = self._enemy_target_exit_dur or 0.16
+
+	if is_requested and anim.state == "exit" then
+		anim.state = "enter"
+		anim.timer = enter_dur * (1 - anim.alpha)
+		anim.x_offset = round_to_int(hidden_x * (1 - anim.alpha))
+	elseif is_requested and anim.state == "hidden" then
+		anim.state = "enter"
+		anim.timer = 0
+		anim.alpha = 0
+		anim.x_offset = hidden_x
+	elseif not is_requested and (anim.state == "enter" or anim.state == "hold") then
+		anim.state = "exit"
+		anim.timer = exit_dur * (1 - anim.alpha)
+	end
+
+	if is_requested then
+		alpha = math.min(alpha + dt * alpha_speed, 1)
+	else
+		alpha = math.max(alpha - dt * alpha_speed, 0)
+	end
+
+	self._enemy_target_alpha_mult = alpha
+
+	if alpha <= 0 and not is_requested then
+		reset_widget(widget, max_debuff_slots)
+
+		reset_anim(self)
+
+		if self.set_scenegraph_position then
+			self:set_scenegraph_position("division_enemy_target_area", hidden_x, 0)
+		end
+
+		return
+	end
+
+	if is_requested then
+		widget.content.name_text = data.name or ""
+		widget.content.health_text = string.format("%d / %d", math.floor(data.health_current or 0), math.floor(data.health_max or 0))
+		widget.content.type_text = ""
+
+		local health_fill_style = widget.style.health_bar_fill
+		local default_size = health_fill_style and health_fill_style.default_size
+		local default_offset = health_fill_style and health_fill_style.default_offset
+		local health_fraction = math.max(0, math.min(1, data.health_fraction or 0))
+
+		if health_fill_style and default_size then
+			local fill_height = math.floor(default_size[2] * health_fraction + 0.5)
+
+			health_fill_style.size[1] = default_size[1]
+			health_fill_style.size[2] = fill_height
+
+			if default_offset then
+				health_fill_style.offset[1] = default_offset[1]
+				health_fill_style.offset[2] = default_offset[2] + (default_size[2] - fill_height)
+				health_fill_style.offset[3] = default_offset[3]
+			end
+		end
+
+		local debuffs = data.debuffs or {}
+
+		for i = 1, max_debuff_slots do
+			local debuff = debuffs[i]
+			local text_id = "debuff_text_" .. i
+			local outline_id = text_id .. "_outline_text"
+
+			if debuff then
+				local label = debuff.label or ""
+				local value_text = debuff.value_text or ""
+				local colored_value_text = color_text(value_text, debuff.colour)
+
+				if label ~= "" and value_text ~= "" then
+					widget.content[text_id] = label .. " " .. colored_value_text
+					widget.content[outline_id] = label .. " " .. value_text
+				else
+					widget.content[text_id] = label ~= "" and label or colored_value_text
+					widget.content[outline_id] = label ~= "" and label or value_text
+				end
+			else
+				widget.content[text_id] = ""
+				widget.content[outline_id] = ""
+			end
+		end
+	end
+
+	anim.timer = anim.timer + dt
+
+	if anim.state == "enter" then
+		local p = math.min(1, anim.timer / enter_dur)
+		local ep = math.easeOutCubic(p)
+
+		anim.alpha = ep
+		anim.x_offset = round_to_int(hidden_x * (1 - ep))
+
+		if p >= 1 then
+			anim.state = "hold"
+			anim.alpha = 1
+			anim.x_offset = 0
+		end
+	elseif anim.state == "hold" then
+		anim.alpha = 1
+		anim.x_offset = 0
+	elseif anim.state == "exit" then
+		local p = math.min(1, anim.timer / exit_dur)
+		local ep = math.easeOutCubic(p)
+
+		anim.alpha = 1 - ep
+		anim.x_offset = round_to_int(hidden_x * ep)
+
+		if p >= 1 then
+			anim.state = "hidden"
+			anim.alpha = 0
+			anim.x_offset = hidden_x
+		end
+	end
+
+	if self.set_scenegraph_position then
+		self:set_scenegraph_position("division_enemy_target_area", anim.x_offset or 0, 0)
+	end
+
+	if anim.state ~= "hidden" and (anim.alpha or 0) > 0 then
+		widget.content.visible = true
+		widget.alpha_multiplier = opacity * alpha * anim.alpha
+	else
+		reset_widget(widget, max_debuff_slots)
+	end
+
+	widget.dirty = true
+end
+
+function M.destroy(self)
+	local widgets_by_name = self._widgets_by_name
+	local widget = widgets_by_name and widgets_by_name.enemy_target
+
+	reset_widget(widget, self._enemy_target_max_debuff_slots or 9)
+	reset_anim(self)
+
+	self._enemy_target_alpha_mult = 0
+
+	if self.set_scenegraph_position then
+		self:set_scenegraph_position("division_enemy_target_area", self._enemy_target_hidden_x or 0, 0)
+	end
+end
+
+return M
