@@ -10,3 +10,7 @@
 	path = 3rdparty/Zombine-Darktide-Mods
 	url = https://github.com/zombine04/darktide-mods.git
 	shallow = true
+[submodule "3rdparty/rrmllnv-Darktide-Mods"]
+	path = 3rdparty/rrmllnv-Darktide-Mods
+	url = https://github.com/rrmllnv/darktide-mods.git
+	shallow = true
