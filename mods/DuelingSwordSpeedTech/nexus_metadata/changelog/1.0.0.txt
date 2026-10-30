@@ -1,0 +1,6 @@
+Automates the Dueling Sword sprint-attack-slide speed tech: sprint, throw an attack, slide right as speed peaks, chain straight into the next attack.
+Light technique (recommended): instant release, no charge needed, higher average speed than plain sprinting.
+Heavy technique (experimental): bigger peak speed but averages slower than plain sprinting due to the weapon's own minimum charge time.
+Settings grouped into Main, Heavy Technique, Light Technique, Slide & Glide Tuning, and Safety & Debug.
+Stamina safety floor that pauses the cycle rather than risk a glitched release on empty stamina.
+Debug trace tool (keybind) that dumps recent cycle data to a file for tuning.

@@ -1,0 +1,22 @@
+[size=4][b]Description[/b][/size]
+[color=#D4D4D8]The Dueling Sword has a speed tech: sprint, throw an attack, slide right as the attack's move-speed curve peaks, and the slide locks in that boosted velocity instead of a plain sprint-slide's own (slower) speed. The window to hit is well under half a second and timed off your own current speed, not a fixed count - too fast and finicky to reliably hit by hand, so this mod does it for you, every cycle, reading your real speed and attack state live and reacting to it.
+
+It also chains: once one slide ends, it starts the next attack right at the tail of it instead of waiting for you to rebuild a full sprint, so the boosted cycle repeats back to back for as long as you keep holding sprint forward.[/color]
+
+[size=4][b]Installation instructions[/b][/size]
+[color=#D4D4D8]1. Install and enable [url=https://www.nexusmods.com/warhammer40kdarktide/mods/8]Darktide Mod Framework[/url].
+2. Install this archive with Vortex, or extract it into <game>\mods\ so you get <game>\mods\DuelingSwordSpeedTech\.
+3. Make sure "DuelingSwordSpeedTech" is listed in <game>\mods\mod_load_order.txt.[/color]
+
+[size=4][b]Main features[/b][/size]
+[color=#D4D4D8]- [b]Light technique[/b] (recommended, default): releases the windup almost instantly - no charge needed - then slides straight out of sprinting. Measured faster on average than plain sprinting, and the cycle costs little to no net stamina since the slide itself lets stamina regenerate.
+- [b]Heavy technique[/b] (experimental): charges and releases a heavy for a bigger single peak, then force-drops the sprint input to open the slide. Hits a higher peak speed than Light, but the weapon's own minimum charge time (0.375-0.5s, fixed by the game) drags its average below plain sprinting in testing so far. Left in and documented for players who want to help tune it further - see its own options section and feel free to report findings.
+- Chain-next-attack-during-glide: keeps the boosted cycle going back to back instead of resetting to a full sprint each time.
+- Tunable sliders for slide-peak detection, glide duration, charge/slide timing overrides, and a stamina safety floor.
+- A debug trace tool (keybind) that dumps the last ~600 frames of cycle data to a file, for anyone who wants to tune the sliders from real numbers instead of guesswork.[/color]
+
+[size=4][b]Requirements[/b][/size]
+[color=#D4D4D8]- [url=https://www.nexusmods.com/warhammer40kdarktide/mods/8]Darktide Mod Framework[/url][/color]
+
+[size=4][b]Shout outs[/b][/size]
+[color=#D4D4D8]Built on the input-handling structure of [url=https://www.nexusmods.com/warhammer40kdarktide/mods/799]SprintKnifeHeavy[/url] by [url=https://www.nexusmods.com/profile/ImperialSkoom]ImperialSkoom[/url], retargeted and extended for the Dueling Sword's very different timing.[/color]

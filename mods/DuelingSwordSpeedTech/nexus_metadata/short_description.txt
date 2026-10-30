@@ -1,0 +1,1 @@
+Automates the Dueling Sword's sprint-attack-slide speed tech: sprint, attack, slide right as speed peaks, chain into the next attack. Timed live from game state, not a fixed delay.
