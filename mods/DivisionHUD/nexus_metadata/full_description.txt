@@ -129,11 +129,10 @@ It can auto-show or hide with the camera perspective, drift dynamically with vie
 
 
 [size=4][b]Installation (unofficial build)[/b][/size]
-[color=#D4D4D8]1. Install and enable [url=https://www.nexusmods.com/warhammer40kdarktide/mods/8]Darktide Mod Framework[/url].
-2. Install this archive with Vortex, or extract it into <game>\mods\ so you get <game>\mods\DivisionHUD\.
-3. Make sure "DivisionHUD" is listed in <game>\mods\mod_load_order.txt.
-
-If you already use the original [url=https://www.nexusmods.com/warhammer40kdarktide/mods/813]Division HUD[/url], remove it first so you don't run two copies. Your mod settings are kept (same mod id).[/color]
+[color=#D4D4D8]1. Uninstall/disable original [url=https://www.nexusmods.com/warhammer40kdarktide/mods/813]Division HUD[/url] mod.
+2. Install and enable [url=https://www.nexusmods.com/warhammer40kdarktide/mods/8]Darktide Mod Framework[/url].
+3. Install this archive with Vortex, or extract it into <game>\mods\ so you get <game>\mods\DivisionHUD\.
+4. Make sure "DivisionHUD" is listed in <game>\mods\mod_load_order.txt.[/color]
 
 [size=4][b]Requirements[/b][/size]
 [color=#D4D4D8][url=https://www.nexusmods.com/warhammer40kdarktide/mods/8]Darktide Mod Framework[/url]. Custom HUD, StimmCountdown, and RecolorStimms are optional and only used if you have them installed.[/color]

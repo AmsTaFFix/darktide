@@ -4,6 +4,9 @@ All notable changes to this unofficial reupload of Division HUD are documented h
 
 ## [Unreleased]
 
+### Changed
+- The mod page now spells out that the original Division HUD must be uninstalled first, since both install to the same mods\DivisionHUD\ folder, and names the "remaining_ability_cooldown (a nil value)" crash as the symptom of leftover old files.
+
 ## 1.11.0 — 2026-10-30
 
 Community fixes by LucLeto.
