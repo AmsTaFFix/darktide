@@ -1,4 +1,4 @@
-local mod = get_mod("SprintRapierHeavy")
+local mod = get_mod("DuelingSwordSpeedTech")
 
 return {
 	name = mod:localize("mod_name"),

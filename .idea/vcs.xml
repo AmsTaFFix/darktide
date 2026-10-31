@@ -4,5 +4,7 @@
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/3rdparty/Darktide-Mod-Framework" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/3rdparty/Darktide-Source-Code" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/3rdparty/Zombine-Darktide-Mods" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/3rdparty/rrmllnv-Darktide-Mods" vcs="Git" />
   </component>
 </project>

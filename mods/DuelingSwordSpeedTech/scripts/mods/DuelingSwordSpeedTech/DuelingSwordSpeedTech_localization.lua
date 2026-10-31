@@ -1,6 +1,6 @@
 return {
 	mod_name = {
-		en = "SprintRapierHeavy",
+		en = "Dueling Sword Speed Tech",
 	},
 	mod_description = {
 		en = "Sprint, attack, and slide right as speed peaks -- then chains into the next attack. Light is recommended; Heavy is experimental.",

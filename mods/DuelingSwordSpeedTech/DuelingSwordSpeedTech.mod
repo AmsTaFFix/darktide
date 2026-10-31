@@ -1,11 +1,11 @@
 return {
 	run = function()
-		fassert(rawget(_G, "new_mod"), "`SprintRapierHeavy` encountered an error loading the Darktide Mod Framework.")
+		fassert(rawget(_G, "new_mod"), "`DuelingSwordSpeedTech` encountered an error loading the Darktide Mod Framework.")
 
-		new_mod("SprintRapierHeavy", {
-			mod_script = "SprintRapierHeavy/scripts/mods/SprintRapierHeavy/SprintRapierHeavy",
-			mod_data = "SprintRapierHeavy/scripts/mods/SprintRapierHeavy/SprintRapierHeavy_data",
-			mod_localization = "SprintRapierHeavy/scripts/mods/SprintRapierHeavy/SprintRapierHeavy_localization",
+		new_mod("DuelingSwordSpeedTech", {
+			mod_script = "DuelingSwordSpeedTech/scripts/mods/DuelingSwordSpeedTech/DuelingSwordSpeedTech",
+			mod_data = "DuelingSwordSpeedTech/scripts/mods/DuelingSwordSpeedTech/DuelingSwordSpeedTech_data",
+			mod_localization = "DuelingSwordSpeedTech/scripts/mods/DuelingSwordSpeedTech/DuelingSwordSpeedTech_localization",
 		})
 	end,
 	packages = {},

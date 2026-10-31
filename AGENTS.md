@@ -10,7 +10,7 @@ Personal Darktide mod workspace. The mods under `mods/` are **vendored forks of 
 
 Consequence for agents on those four: **keep diffs minimal and upstream-mergeable.** Fix the bug and stop — no restyling, no refactors, no renames, no "while I'm here" cleanup. A smaller diff merges faster upstream.
 
-- `SprintRapierHeavy` — our **own** mod, not a vendored fork: derived from ImperialSkoom's `SprintKnifeHeavy` (Nexus mod 799), retargeted at the Dueling Sword (`combatsword_p3` family) instead of the Combat Knife. No upstream to stay mergeable with, so the minimal-diff rule above doesn't bind it — ordinary feature-development judgment applies instead.
+- `DuelingSwordSpeedTech` — our **own** mod, not a vendored fork: derived from ImperialSkoom's `SprintKnifeHeavy` (Nexus mod 799), retargeted at the Dueling Sword (`combatsword_p3` family) instead of the Combat Knife. No upstream to stay mergeable with, so the minimal-diff rule above doesn't bind it — ordinary feature-development judgment applies instead.
 
 ## Layout
 
@@ -34,7 +34,7 @@ Mods:
 - **crosshair_hud** — custom HUD element with Toughness/Health/Coherency/Ammo/Reload/Grenade/Ability indicators near the crosshair.
 - **SquadHud** — four compact strike-team panels (health, toughness, statuses, distance, resources, loadout) replacing the vanilla squad UI. Note: dir is PascalCase `mods/SquadHud/` (not snake_case), matching its upstream dir and `new_mod("SquadHud")` id; a multi-file mod under `scripts/mods/SquadHud/`. Commit scope is written `squad_hud` per the Git convention below.
 - **DivisionHUD** — a The-Division-style combat HUD: health/toughness/stamina bars, resource and loadout boxes, ability/blitz timers, buff rows, plus enemy-target, alerts, proximity, and danger-zone panels, with optional vanilla-HUD suppression. Note: dir is PascalCase `mods/DivisionHUD/` (not snake_case), matching its upstream dir and `new_mod("DivisionHUD")` id; a multi-file mod under `scripts/mods/DivisionHUD/`. Commit scope is written `division_hud` per the Git convention below.
-- **SprintRapierHeavy** — automates the Dueling Sword (`combatsword_p3`) sprint-attack-slide speed tech: sprint, attack, slide right as speed peaks, chain into the next attack. Two techniques (Light, recommended; Heavy, experimental), tuned from live Claude Bridge telemetry. Our own mod, no upstream.
+- **DuelingSwordSpeedTech** — automates the Dueling Sword (`combatsword_p3`) sprint-attack-slide speed tech: sprint, attack, slide right as speed peaks, chain into the next attack. Two techniques (Light, recommended; Heavy, experimental), tuned from live Claude Bridge telemetry. Our own mod, no upstream.
 
 ## Reference submodules
 

@@ -17,7 +17,7 @@
 --     unnecessary and, worse, the block's own negative movement curve ate into the glide -- going
 --     straight into the slide from "sprinting" preserves more speed through the friction grace
 --     period and is simpler.
-local mod = get_mod("SprintRapierHeavy")
+local mod = get_mod("DuelingSwordSpeedTech")
 
 local HEALTH_ALIVE = HEALTH_ALIVE
 local Managers = Managers
@@ -201,7 +201,7 @@ local function abort_cycle(t, reason)
 	last_event = reason or "?"
 
 	if controller.phase ~= PHASE_IDLE and settings.debug_notify then
-		mod:notify(string.format("SprintRapierHeavy: cycle aborted (%s)", reason or "?"))
+		mod:notify(string.format("DuelingSwordSpeedTech: cycle aborted (%s)", reason or "?"))
 	end
 
 	controller.heavy_start_t = nil
@@ -602,7 +602,7 @@ local function update_phase_machine(unit, t)
 
 		if speed < (settings.glide_release_speed or 4.4) or glide_elapsed > (settings.glide_max_time or 2.0) then
 			if settings.debug_notify then
-				mod:notify(string.format("SprintRapierHeavy: cycle ok, peak carried into slide (speed %.2f)", speed))
+				mod:notify(string.format("DuelingSwordSpeedTech: cycle ok, peak carried into slide (speed %.2f)", speed))
 			end
 
 			if settings.chain_during_glide then
@@ -789,7 +789,7 @@ function mod.toggle_mod_enabled()
 		reset_controller()
 	end
 
-	mod:notify(string.format("SprintRapierHeavy: %s", setting_enabled and "Enabled" or "Disabled"))
+	mod:notify(string.format("DuelingSwordSpeedTech: %s", setting_enabled and "Enabled" or "Disabled"))
 end
 
 function mod.dump_trace()
@@ -806,7 +806,7 @@ function mod.dump_trace()
 	end
 
 	mod:dtf(ordered, "sprh_trace", 3)
-	mod:notify(string.format("SprintRapierHeavy: dumped %d trace samples", #ordered))
+	mod:notify(string.format("DuelingSwordSpeedTech: dumped %d trace samples", #ordered))
 end
 
 mod.on_setting_changed = function(setting_id)
