@@ -1,0 +1,1 @@
+Fixed a random engine crash (resource refcount assertion) on level/mission transitions when the vanilla team HUD was also enabled alongside the squad panels.

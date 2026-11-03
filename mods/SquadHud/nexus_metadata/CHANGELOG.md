@@ -4,6 +4,8 @@ All notable changes to this unofficial reupload of Squad HUD are documented here
 
 ## [Unreleased]
 
+## 1.6.1 — 2026-11-03
+
 ### Fixed
 - Random engine crash (resource refcount assertion) on level/mission transitions when the vanilla team HUD was also enabled alongside the squad panels — a teammate's ability icon could keep a stale reference to an unloaded texture after the panel stopped showing that ability.
 
