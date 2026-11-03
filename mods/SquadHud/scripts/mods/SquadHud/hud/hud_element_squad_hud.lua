@@ -4,6 +4,7 @@ local HudElementBase = require("scripts/ui/hud/elements/hud_element_base")
 local HudHealthBarLogic = require("scripts/ui/hud/elements/hud_health_bar_logic")
 local TeamPlayerPanelSettings = require("scripts/ui/hud/elements/team_player_panel/hud_element_team_player_panel_settings")
 local UIHudSettings = require("scripts/settings/ui/ui_hud_settings")
+local UIPasses = require("scripts/managers/ui/ui_passes")
 local TextUtilities = require("scripts/utilities/ui/text")
 
 local Definitions = mod:io_dofile("SquadHud/scripts/mods/SquadHud/hud/definitions/squad_hud_definitions")
@@ -1164,9 +1165,31 @@ local function expanded_view_level_text(player, expanded_view)
 	return PlayerDataRuntime.player_level_text(player) or ""
 end
 
-local function apply_ability_state(style, ability_state)
+-- The ability icon pass uses material_values, which makes the engine create a Gui material holding a reference to
+-- the icon texture (UIRenderer.create_material / Material.set_texture). Unlike vanilla's ability element, which
+-- destroys itself when an ability stops being shown, this pass just stops drawing (invisible passes aren't
+-- destroyed in immediate mode) and keeps that texture reference alive until the whole widget is torn down -- long
+-- after the texture's own package (profile/mission-specific, not one of the packages this mod pins) has unloaded.
+-- Release it explicitly whenever a panel stops showing an ability so the reference doesn't outlive the texture.
+local function release_ability_icon_material(widget, ui_renderer)
+	if not widget or not ui_renderer then
+		return
+	end
+
+	for _, pass in ipairs(widget.passes) do
+		if pass.style_id == "ability_icon" and pass.data.material then
+			UIPasses[pass.pass_type].destroy(pass, ui_renderer, widget)
+		end
+	end
+end
+
+local function apply_ability_state(widget, ui_renderer, style, ability_state)
 	local icon_style = style.ability_icon
 	local material_values = icon_style and icon_style.material_values
+
+	if not ability_state then
+		release_ability_icon_material(widget, ui_renderer)
+	end
 
 	if material_values then
 		material_values.talent_icon = ability_state and ability_state.icon or nil
@@ -1227,8 +1250,9 @@ local function set_panel_visible(widget, visible)
 	widget.dirty = true
 end
 
-local function apply_empty_panel(widget)
+local function apply_empty_panel(widget, ui_renderer)
 	set_panel_visible(widget, false)
+	release_ability_icon_material(widget, ui_renderer)
 end
 
 local function apply_layout_settings(self, widgets_by_name)
@@ -1958,7 +1982,7 @@ local function apply_player_panel(self, widget, local_player, player, extensions
 		content.hub_presence_inventory_text = ""
 	end
 
-	apply_ability_state(style, hub_strip_squad_loadout_ui and nil or ability_state)
+	apply_ability_state(widget, ui_renderer, style, hub_strip_squad_loadout_ui and nil or ability_state)
 
 	local ability_slide_offset = (1 - vitals_ability_reveal) * VITALS_REVEAL_ABILITY_SLIDE_OFFSET
 
@@ -2106,7 +2130,10 @@ HudElementSquadHud.update = function(self, dt, t, ui_renderer, render_settings, 
 
 	if not setting_enabled() then
 		for i = 1, MAX_PLAYERS do
-			set_panel_visible(widgets_by_name["panel_" .. i], false)
+			local widget = widgets_by_name["panel_" .. i]
+
+			set_panel_visible(widget, false)
+			release_ability_icon_material(widget, ui_renderer)
 		end
 
 		ExpandedViewRuntime.reset(self)
@@ -2132,7 +2159,7 @@ HudElementSquadHud.update = function(self, dt, t, ui_renderer, render_settings, 
 		if player then
 			apply_player_panel(self, widget, local_player, player, PlayerDataRuntime.extensions_for_player(self._parent, player), dt, t, ui_renderer)
 		else
-			apply_empty_panel(widget)
+			apply_empty_panel(widget, ui_renderer)
 		end
 	end
 
